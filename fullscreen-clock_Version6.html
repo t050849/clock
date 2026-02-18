@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>全螢幕時鐘 - 適配 iPad 2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
+            font-family: 'Courier New', 'Monaco', monospace;
+            overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px;
+            cursor: pointer;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            position: relative;
+        }
+
+        .top-section {
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+        }
+
+        .date-display {
+            font-size: 32px;
+            color: #00FF00;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .middle-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+        }
+
+        .time-display {
+            font-size: 160px;
+            color: #FFFFFF;
+            font-weight: bold;
+            letter-spacing: 8px;
+            line-height: 1;
+            text-align: center;
+        }
+
+        .bottom-section {
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-end;
+        }
+
+        .weather-display {
+            font-size: 28px;
+            color: #00FF00;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* 針對舊版 Safari 的相容性調整 */
+        body {
+            display: -webkit-flex;
+            -webkit-flex-direction: column;
+            -webkit-justify-content: space-between;
+        }
+
+        .top-section {
+            display: -webkit-flex;
+            -webkit-justify-content: flex-start;
+            -webkit-align-items: flex-start;
+        }
+
+        .middle-section {
+            display: -webkit-flex;
+            -webkit-justify-content: center;
+            -webkit-align-items: center;
+            -webkit-flex: 1;
+        }
+
+        .bottom-section {
+            display: -webkit-flex;
+            -webkit-justify-content: flex-start;
+            -webkit-align-items: flex-end;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-section">
+            <div class="date-display" id="dateDisplay">2026年2月18日 週三</div>
+        </div>
+
+        <div class="middle-section">
+            <div class="time-display" id="timeDisplay">00:00:00</div>
+        </div>
+
+        <div class="bottom-section">
+            <div class="weather-display" id="weatherDisplay">蘆竹區 新興里 -- 度 --</div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 全局變數 ====================
+        var is12HourFormat = true;
+        var currentWeather = '蘆竹區 新興里 -- 度 --';
+        
+        // 桃園市蘆竹區新興里的坐標
+        var userLatitude = 25.0642;
+        var userLongitude = 121.3201;
+        
+        var weatherCheckInterval = 10 * 60 * 1000; // 10分鐘更新一次
+        var timeCheckInterval = 60 * 1000; // 每分鐘校時一次
+
+        // ==================== DOM 元素 ====================
+        var dateDisplayElement = document.getElementById('dateDisplay');
+        var timeDisplayElement = document.getElementById('timeDisplay');
+        var weatherDisplayElement = document.getElementById('weatherDisplay');
+
+        // ==================== OpenWeatherMap API Key ====================
+        var OPENWEATHERMAP_API_KEY = '5d13f280068f27e7b123c2b25149a95c';
+
+        // ==================== 格式化日期（西元年月日） ====================
+        function formatDate(date) {
+            var weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var weekDay = weekDays[date.getDay()];
+
+            return year + '年' + month + '月' + day + '日 ' + weekDay;
+        }
+
+        // ==================== 格式化時間 ====================
+        function formatTime(date) {
+            var hours = date.getHours();
+            var minutes = date.getMinutes();
+            var seconds = date.getSeconds();
+
+            var timeString;
+
+            if (is12HourFormat) {
+                var ampm = hours >= 12 ? 'PM' : 'AM';
+                var displayHours = hours % 12;
+                if (displayHours === 0) {
+                    displayHours = 12;
+                }
+                timeString = padZero(ampm) + ' ' + padZero(displayHours) + ':' + padZero(minutes) + ':' + padZero(seconds);
+            } else {
+                timeString = padZero(hours) + ':' + padZero(minutes) + ':' + padZero(seconds);
+            }
+
+            return timeString;
+        }
+
+        // ==================== 補零函數 ====================
+        function padZero(num) {
+            var str = String(num);
+            return str.length < 2 ? '0' + str : str;
+        }
+
+        // ==================== 更新時鐘顯示 ====================
+        function updateClock() {
+            var now = new Date();
+            dateDisplayElement.textContent = formatDate(now);
+            timeDisplayElement.textContent = formatTime(now);
+        }
+
+        // ==================== 切換時制 ====================
+        function toggleTimeFormat() {
+            is12HourFormat = !is12HourFormat;
+            updateClock();
+        }
+
+        // ==================== 天氣狀況中文轉換 ====================
+        function translateWeather(weatherMain) {
+            var weatherMap = {
+                'Clear': '晴',
+                'Clouds': '多雲',
+                'Rain': '雨',
+                'Drizzle': '毛毛雨',
+                'Thunderstorm': '雷雨',
+                'Snow': '雪',
+                'Mist': '霧',
+                'Fog': '霧',
+                'Haze': '霾'
+            };
+            
+            return weatherMap[weatherMain] || weatherMain;
+        }
+
+        // ==================== 取得天氣資訊 ====================
+        function fetchWeather() {
+            var apiUrl = 'https://api.openweathermap.org/data/2.5/weather?lat=' + userLatitude + '&lon=' + userLongitude + '&appid=' + OPENWEATHERMAP_API_KEY + '&units=metric&lang=zh_cn';
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        try {
+                            var data = JSON.parse(xhr.responseText);
+                            var temp = Math.round(data.main.temp);
+                            var weatherDescription = data.weather[0].main;
+                            var weatherChinese = translateWeather(weatherDescription);
+
+                            currentWeather = '蘆竹區 新興里 ' + temp + '度 ' + weatherChinese;
+                            weatherDisplayElement.textContent = currentWeather;
+                        } catch (error) {
+                            console.log('Parse error:', error);
+                            weatherDisplayElement.textContent = '蘆竹區 新興里 解析錯誤';
+                        }
+                    } else {
+                        weatherDisplayElement.textContent = '蘆竹區 新興里 天氣取得失敗';
+                        console.log('Weather API error:', xhr.status);
+                    }
+                }
+            };
+
+            xhr.onerror = function() {
+                weatherDisplayElement.textContent = '蘆竹區 新興里 網路連接失敗';
+            };
+
+            xhr.open('GET', apiUrl, true);
+            xhr.send();
+        }
+
+        // ==================== 網路校時 ====================
+        function syncTimeWithAPI() {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        var serverTime = new Date(data.datetime);
+                        var clientTime = new Date();
+                        var timeDifference = serverTime.getTime() - clientTime.getTime();
+
+                        if (Math.abs(timeDifference) > 1000) {
+                            console.log('Time corrected by:', timeDifference, 'ms');
+                        }
+                    } catch (error) {
+                        console.log('Time sync parse error:', error);
+                    }
+                }
+            };
+
+            xhr.onerror = function() {
+                console.log('Time sync network error');
+            };
+
+            xhr.open('GET', 'https://worldtimeapi.org/api/timezone/Asia/Taipei', true);
+            xhr.send();
+        }
+
+        // ==================== 初始化 ====================
+        function init() {
+            // 更新初始時鐘
+            updateClock();
+
+            // 每秒更新時鐘
+            setInterval(updateClock, 1000);
+
+            // 每分鐘校時一次
+            setInterval(syncTimeWithAPI, timeCheckInterval);
+
+            // 立即取得天氣
+            fetchWeather();
+
+            // 每10分鐘更新天氣一次
+            setInterval(fetchWeather, weatherCheckInterval);
+
+            // 綁定點擊事件到整個版面
+            document.body.onclick = toggleTimeFormat;
+        }
+
+        // ==================== 文件準備完成後執行 ====================
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
