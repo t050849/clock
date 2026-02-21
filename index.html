@@ -2,7 +2,10 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="全螢幕時鐘">
     <title>全螢幕時鐘 - 適配 iPad 2</title>
     <style>
         * {
@@ -19,6 +22,7 @@
             overflow: hidden;
             -webkit-user-select: none;
             user-select: none;
+            -webkit-touch-callout: none;
         }
 
         body {
@@ -255,12 +259,11 @@
         // ==================== 全局變數 ====================
         var is12HourFormat = true;
         var currentWeather = '蘆竹區 新興里 -- 度 --';
-        var fontSizeMultiplier1 = 1.0; // 年月日
-        var fontSizeMultiplier2 = 1.0; // 時間
-        var fontSizeMultiplier3 = 1.0; // 溫度天氣
+        var fontSizeMultiplier1 = 1.0;
+        var fontSizeMultiplier2 = 1.0;
+        var fontSizeMultiplier3 = 1.0;
         var popupOpen = false;
         
-        // 桃園市蘆竹區新興里的坐標
         var userLatitude = 25.0642;
         var userLongitude = 121.3201;
         
@@ -283,17 +286,14 @@
         var increaseBtn3 = document.getElementById('increaseBtn3');
         var sizeLabel3 = document.getElementById('sizeLabel3');
 
-        // ==================== OpenWeatherMap API Key ====================
         var OPENWEATHERMAP_API_KEY = '5d13f280068f27e7b123c2b25149a95c';
 
-        // ==================== 基礎字體大小 ====================
         var baseFontSizes = {
             date: 32,
             time: 160,
             weather: 28
         };
 
-        // ==================== 格式化日期（西元年月日） ====================
         function formatDate(date) {
             var weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
             var year = date.getFullYear();
@@ -304,7 +304,6 @@
             return year + '年' + month + '月' + day + '日 ' + weekDay;
         }
 
-        // ==================== 格式化時間 ====================
         function formatTime(date) {
             var hours = date.getHours();
             var minutes = date.getMinutes();
@@ -326,26 +325,22 @@
             return timeString;
         }
 
-        // ==================== 補零函數 ====================
         function padZero(num) {
             var str = String(num);
             return str.length < 2 ? '0' + str : str;
         }
 
-        // ==================== 更新時鐘顯示 ====================
         function updateClock() {
             var now = new Date();
             dateDisplayElement.textContent = formatDate(now);
             timeDisplayElement.textContent = formatTime(now);
         }
 
-        // ==================== 切換時制 ====================
         function toggleTimeFormat() {
             is12HourFormat = !is12HourFormat;
             updateClock();
         }
 
-        // ==================== 切換彈出窗口 ====================
         function togglePopup(e) {
             e.stopPropagation();
             popupOpen = !popupOpen;
@@ -356,13 +351,11 @@
             }
         }
 
-        // ==================== 關閉彈出窗口 ====================
         function closePopup() {
             popupOpen = false;
             fontSizePopup.classList.remove('show');
         }
 
-        // ==================== 更新字體大小 ====================
         function updateFontSizes() {
             dateDisplayElement.style.fontSize = (baseFontSizes.date * fontSizeMultiplier1) + 'px';
             timeDisplayElement.style.fontSize = (baseFontSizes.time * fontSizeMultiplier2) + 'px';
@@ -375,7 +368,6 @@
             sizeLabel2.textContent = percentage2 + '%';
             sizeLabel3.textContent = percentage3 + '%';
 
-            // 儲存到本地存儲
             try {
                 localStorage.setItem('fontSizeMultiplier1', fontSizeMultiplier1);
                 localStorage.setItem('fontSizeMultiplier2', fontSizeMultiplier2);
@@ -385,7 +377,6 @@
             }
         }
 
-        // ==================== 減小年月日字體 ====================
         function decreaseFont1(e) {
             e.stopPropagation();
             if (fontSizeMultiplier1 > 0.5) {
@@ -395,7 +386,6 @@
             }
         }
 
-        // ==================== 增大年月日字體 ====================
         function increaseFont1(e) {
             e.stopPropagation();
             if (fontSizeMultiplier1 < 5.0) {
@@ -405,7 +395,6 @@
             }
         }
 
-        // ==================== 減小時間字體 ====================
         function decreaseFont2(e) {
             e.stopPropagation();
             if (fontSizeMultiplier2 > 0.5) {
@@ -415,7 +404,6 @@
             }
         }
 
-        // ==================== 增大時間字體 ====================
         function increaseFont2(e) {
             e.stopPropagation();
             if (fontSizeMultiplier2 < 5.0) {
@@ -425,7 +413,6 @@
             }
         }
 
-        // ==================== 減小溫度天氣字體 ====================
         function decreaseFont3(e) {
             e.stopPropagation();
             if (fontSizeMultiplier3 > 0.5) {
@@ -435,7 +422,6 @@
             }
         }
 
-        // ==================== 增大溫度天氣字體 ====================
         function increaseFont3(e) {
             e.stopPropagation();
             if (fontSizeMultiplier3 < 5.0) {
@@ -445,7 +431,6 @@
             }
         }
 
-        // ==================== 天氣狀況中文轉換 ====================
         function translateWeather(weatherMain) {
             var weatherMap = {
                 'Clear': '晴',
@@ -462,7 +447,6 @@
             return weatherMap[weatherMain] || weatherMain;
         }
 
-        // ==================== 取得天氣資訊 ====================
         function fetchWeather() {
             var apiUrl = 'https://api.openweathermap.org/data/2.5/weather?lat=' + userLatitude + '&lon=' + userLongitude + '&appid=' + OPENWEATHERMAP_API_KEY + '&units=metric&lang=zh_cn';
 
@@ -497,7 +481,6 @@
             xhr.send();
         }
 
-        // ==================== 網路校時 ====================
         function syncTimeWithAPI() {
             var xhr = new XMLHttpRequest();
             xhr.onreadystatechange = function() {
@@ -525,9 +508,7 @@
             xhr.send();
         }
 
-        // ==================== 初始化 ====================
         function init() {
-            // 從本地存儲讀取字體大小
             try {
                 var savedSize1 = localStorage.getItem('fontSizeMultiplier1');
                 var savedSize2 = localStorage.getItem('fontSizeMultiplier2');
@@ -545,23 +526,15 @@
                 console.log('localStorage not available');
             }
 
-            // 更新初始時鐘
             updateClock();
             updateFontSizes();
 
-            // 每秒更新時鐘
             setInterval(updateClock, 1000);
-
-            // 每分鐘校時一次
             setInterval(syncTimeWithAPI, timeCheckInterval);
 
-            // 立即取得天氣
             fetchWeather();
-
-            // 每10分鐘更新天氣一次
             setInterval(fetchWeather, weatherCheckInterval);
 
-            // 綁定點擊事件到整個版面（切換時制）
             document.body.onclick = function(event) {
                 closePopup();
                 if (event.target !== fontSizeBtn) {
@@ -569,7 +542,6 @@
                 }
             };
 
-            // 綁定字體大小按鈕
             fontSizeBtn.onclick = togglePopup;
             decreaseBtn1.onclick = decreaseFont1;
             increaseBtn1.onclick = increaseFont1;
@@ -577,9 +549,13 @@
             increaseBtn2.onclick = increaseFont2;
             decreaseBtn3.onclick = decreaseFont3;
             increaseBtn3.onclick = increaseFont3;
+
+            // 隱藏 Safari UI（部分設備支援）
+            if (navigator.standalone === undefined) {
+                window.scrollTo(0, 1);
+            }
         }
 
-        // ==================== 文件準備完成後執行 ====================
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', init);
         } else {
