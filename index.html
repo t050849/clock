@@ -116,6 +116,7 @@
             display: none;
             z-index: 1000;
             white-space: nowrap;
+            max-width: 280px;
         }
 
         .font-size-popup.show {
@@ -158,7 +159,7 @@
         }
 
         .popup-section {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
         .popup-section:last-child {
@@ -222,7 +223,7 @@
                 <button class="font-size-button" id="fontSizeBtn" title="調整字體"></button>
                 <div class="font-size-popup" id="fontSizePopup">
                     <div class="popup-section">
-                        <div class="popup-title">日期/天氣</div>
+                        <div class="popup-title">年月日</div>
                         <div class="font-size-popup-content">
                             <button class="popup-btn" id="decreaseBtn1">−</button>
                             <span class="popup-label" id="sizeLabel1">100%</span>
@@ -237,6 +238,14 @@
                             <button class="popup-btn" id="increaseBtn2">+</button>
                         </div>
                     </div>
+                    <div class="popup-section">
+                        <div class="popup-title">溫度天氣</div>
+                        <div class="font-size-popup-content">
+                            <button class="popup-btn" id="decreaseBtn3">−</button>
+                            <span class="popup-label" id="sizeLabel3">100%</span>
+                            <button class="popup-btn" id="increaseBtn3">+</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -246,8 +255,9 @@
         // ==================== 全局變數 ====================
         var is12HourFormat = true;
         var currentWeather = '蘆竹區 新興里 -- 度 --';
-        var fontSizeMultiplier1 = 1.0; // 日期/天氣
+        var fontSizeMultiplier1 = 1.0; // 年月日
         var fontSizeMultiplier2 = 1.0; // 時間
+        var fontSizeMultiplier3 = 1.0; // 溫度天氣
         var popupOpen = false;
         
         // 桃園市蘆竹區新興里的坐標
@@ -269,6 +279,9 @@
         var decreaseBtn2 = document.getElementById('decreaseBtn2');
         var increaseBtn2 = document.getElementById('increaseBtn2');
         var sizeLabel2 = document.getElementById('sizeLabel2');
+        var decreaseBtn3 = document.getElementById('decreaseBtn3');
+        var increaseBtn3 = document.getElementById('increaseBtn3');
+        var sizeLabel3 = document.getElementById('sizeLabel3');
 
         // ==================== OpenWeatherMap API Key ====================
         var OPENWEATHERMAP_API_KEY = '5d13f280068f27e7b123c2b25149a95c';
@@ -352,24 +365,27 @@
         // ==================== 更新字體大小 ====================
         function updateFontSizes() {
             dateDisplayElement.style.fontSize = (baseFontSizes.date * fontSizeMultiplier1) + 'px';
-            weatherDisplayElement.style.fontSize = (baseFontSizes.weather * fontSizeMultiplier1) + 'px';
             timeDisplayElement.style.fontSize = (baseFontSizes.time * fontSizeMultiplier2) + 'px';
+            weatherDisplayElement.style.fontSize = (baseFontSizes.weather * fontSizeMultiplier3) + 'px';
             
             var percentage1 = Math.round(fontSizeMultiplier1 * 100);
             var percentage2 = Math.round(fontSizeMultiplier2 * 100);
+            var percentage3 = Math.round(fontSizeMultiplier3 * 100);
             sizeLabel1.textContent = percentage1 + '%';
             sizeLabel2.textContent = percentage2 + '%';
+            sizeLabel3.textContent = percentage3 + '%';
 
             // 儲存到本地存儲
             try {
                 localStorage.setItem('fontSizeMultiplier1', fontSizeMultiplier1);
                 localStorage.setItem('fontSizeMultiplier2', fontSizeMultiplier2);
+                localStorage.setItem('fontSizeMultiplier3', fontSizeMultiplier3);
             } catch (e) {
                 console.log('localStorage not available');
             }
         }
 
-        // ==================== 減小日期/天氣字體 ====================
+        // ==================== 減小年月日字體 ====================
         function decreaseFont1(e) {
             e.stopPropagation();
             if (fontSizeMultiplier1 > 0.5) {
@@ -379,10 +395,10 @@
             }
         }
 
-        // ==================== 增大日期/天氣字體 ====================
+        // ==================== 增大年月日字體 ====================
         function increaseFont1(e) {
             e.stopPropagation();
-            if (fontSizeMultiplier1 < 2.0) {
+            if (fontSizeMultiplier1 < 5.0) {
                 fontSizeMultiplier1 += 0.1;
                 fontSizeMultiplier1 = Math.round(fontSizeMultiplier1 * 10) / 10;
                 updateFontSizes();
@@ -402,9 +418,29 @@
         // ==================== 增大時間字體 ====================
         function increaseFont2(e) {
             e.stopPropagation();
-            if (fontSizeMultiplier2 < 2.0) {
+            if (fontSizeMultiplier2 < 5.0) {
                 fontSizeMultiplier2 += 0.1;
                 fontSizeMultiplier2 = Math.round(fontSizeMultiplier2 * 10) / 10;
+                updateFontSizes();
+            }
+        }
+
+        // ==================== 減小溫度天氣字體 ====================
+        function decreaseFont3(e) {
+            e.stopPropagation();
+            if (fontSizeMultiplier3 > 0.5) {
+                fontSizeMultiplier3 -= 0.1;
+                fontSizeMultiplier3 = Math.round(fontSizeMultiplier3 * 10) / 10;
+                updateFontSizes();
+            }
+        }
+
+        // ==================== 增大溫度天氣字體 ====================
+        function increaseFont3(e) {
+            e.stopPropagation();
+            if (fontSizeMultiplier3 < 5.0) {
+                fontSizeMultiplier3 += 0.1;
+                fontSizeMultiplier3 = Math.round(fontSizeMultiplier3 * 10) / 10;
                 updateFontSizes();
             }
         }
@@ -495,11 +531,15 @@
             try {
                 var savedSize1 = localStorage.getItem('fontSizeMultiplier1');
                 var savedSize2 = localStorage.getItem('fontSizeMultiplier2');
+                var savedSize3 = localStorage.getItem('fontSizeMultiplier3');
                 if (savedSize1) {
                     fontSizeMultiplier1 = parseFloat(savedSize1);
                 }
                 if (savedSize2) {
                     fontSizeMultiplier2 = parseFloat(savedSize2);
+                }
+                if (savedSize3) {
+                    fontSizeMultiplier3 = parseFloat(savedSize3);
                 }
             } catch (e) {
                 console.log('localStorage not available');
@@ -535,6 +575,8 @@
             increaseBtn1.onclick = increaseFont1;
             decreaseBtn2.onclick = decreaseFont2;
             increaseBtn2.onclick = increaseFont2;
+            decreaseBtn3.onclick = decreaseFont3;
+            increaseBtn3.onclick = increaseFont3;
         }
 
         // ==================== 文件準備完成後執行 ====================
