@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>iPad 2 農曆時鐘版</title>
+    <title>iPad 2 智慧節慶時鐘</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body, html {
@@ -14,57 +14,48 @@
             overflow: hidden;
         }
 
-        /* 佈局結構 */
         .top-section { position: absolute; top: 30px; left: 40px; }
         .bottom-section { position: absolute; bottom: 40px; left: 40px; right: 40px; }
 
         .middle-section { 
-            position: absolute; 
-            top: 50%; 
-            left: 0; 
-            width: 100%; 
-            text-align: center;
-            -webkit-transform: translateY(-50%);
-            transform: translateY(-50%);
+            position: absolute; top: 50%; left: 0; width: 100%; text-align: center;
+            -webkit-transform: translateY(-50%); transform: translateY(-50%);
         }
 
-        .date-display { font-size: 32px; color: #FFFF00; font-weight: bold; line-height: 1.4; }
-        .lunar-display { font-size: 24px; color: #FFFF00; font-weight: bold; opacity: 0.9; }
+        .date-container { display: flex; flex-direction: column; }
+        .date-display { 
+            font-size: 32px; color: #FFFF00; font-weight: bold; line-height: 1.1;
+            -webkit-transform-origin: left bottom; transform-origin: left bottom;
+        }
+        .lunar-display { 
+            font-size: 22px; color: #FFFF00; font-weight: bold; line-height: 1.1; margin-top: 2px;
+            -webkit-transform-origin: left top; transform-origin: left top;
+        }
         
+        /* 假日紅色的特定樣式 */
+        .holiday-red { color: #FF0000 !important; }
+
         .time-display { 
-            font-size: 160px; 
-            color: #FFFFFF; 
-            font-weight: bold; 
-            white-space: nowrap; 
-            display: inline-block;
-            -webkit-transform-origin: center center;
-            transform-origin: center center;
+            font-size: 160px; color: #FFFFFF; font-weight: bold; white-space: nowrap; 
+            display: inline-block; -webkit-transform-origin: center center; transform-origin: center center;
         }
 
         .weather-display { 
-            font-size: 28px; 
-            color: #FFFF00; 
-            font-weight: bold; 
-            display: -webkit-box;
-            -webkit-box-align: center;
-            display: flex;
-            align-items: center; 
+            font-size: 28px; color: #FFFF00; font-weight: bold; display: flex; align-items: center; 
+            -webkit-transform-origin: left bottom; transform-origin: left bottom;
         }
         
-        .weather-icon { display: inline-block; margin-right: 12px; font-size: 1.4em; }
+        .weather-icon { display: inline-block; margin-right: 12px; font-size: 1.2em; }
         .rain-chance { color: #00CED1; margin-right: 15px; font-size: 0.9em; }
 
         .control-button {
-            position: absolute; bottom: 0; right: 0;
-            width: 30px; height: 30px; background: rgba(255,255,0,0.1);
-            border: 1px solid rgba(255,255,0,0.3); border-radius: 15px;
+            position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; 
+            background: rgba(255,255,0,0.1); border: 1px solid rgba(255,255,0,0.3); border-radius: 15px;
         }
 
-        /* 設定面板 */
         .main-popup {
-            position: absolute; bottom: 40px; right: 10px;
-            background: rgba(10, 10, 10, 0.98); border: 2px solid #FFFF00;
-            padding: 15px; display: none; z-index: 1000; width: 300px;
+            position: absolute; bottom: 40px; right: 10px; background: rgba(10, 10, 10, 0.98); 
+            border: 2px solid #FFFF00; padding: 15px; display: none; z-index: 1000; width: 300px;
             max-height: 85%; overflow-y: scroll; -webkit-overflow-scrolling: touch;
         }
         .show { display: block; }
@@ -79,8 +70,10 @@
 <body>
 
     <div class="top-section">
-        <div id="dateDisplay" class="date-display">載入中...</div>
-        <div id="lunarDisplay" class="lunar-display">載入中...</div>
+        <div class="date-container">
+            <div id="dateDisplay" class="date-display">載入中...</div>
+            <div id="lunarDisplay" class="lunar-display">載入中...</div>
+        </div>
     </div>
 
     <div class="middle-section">
@@ -96,7 +89,6 @@
 
     <div id="mainPopup" class="main-popup">
         <button class="btn" style="width:100%" onclick="toggleFormat()">切換 12/24H 制</button>
-
         <div class="section-title">時間比例</div>
         <div class="color-row">
             寬度: <button class="btn btn-sm" onclick="adjTimeW(-0.05)">-</button>
@@ -108,31 +100,28 @@
             <span id="hLab" class="val-lab">100%</span>
             <button class="btn btn-sm" onclick="adjTimeH(0.1)">+</button>
         </div>
-
-        <div class="section-title">日期 & 天氣大小</div>
+        <div class="section-title">日期 & 天氣縮放</div>
         <div class="color-row">
-            日期: <button class="btn btn-sm" onclick="adjOtherF(1, -2)">-</button>
-            <span id="dSizeLab" class="val-lab">32px</span>
-            <button class="btn btn-sm" onclick="adjOtherF(1, 2)">+</button>
+            日期: <button class="btn btn-sm" onclick="adjScale('date', -0.1)">-</button>
+            <span id="dateScaleLab" class="val-lab">100%</span>
+            <button class="btn btn-sm" onclick="adjScale('date', 0.1)">+</button>
         </div>
         <div class="color-row">
-            天氣: <button class="btn btn-sm" onclick="adjOtherF(3, -2)">-</button>
-            <span id="wSizeLab" class="val-lab">28px</span>
-            <button class="btn btn-sm" onclick="adjOtherF(3, 2)">+</button>
+            天氣: <button class="btn btn-sm" onclick="adjScale('weather', -0.1)">-</button>
+            <span id="weatherScaleLab" class="val-lab">100%</span>
+            <button class="btn btn-sm" onclick="adjScale('weather', 0.1)">+</button>
         </div>
-
         <div class="section-title">字體顏色</div>
         <div id="palette1" class="color-row"></div>
         <div id="palette2" class="color-row"></div>
         <div id="palette3" class="color-row"></div>
-
         <button class="btn" style="width:100%; margin-top:20px; background:#400; color:#fff; border:none;" onclick="closeMenu()">儲存並關閉</button>
     </div>
 
     <script>
         var is12H = true;
         var scaleX = 1.0, scaleY = 1.0;
-        var dateF = 32, weatherF = 28;
+        var dateScale = 1.0, weatherScale = 1.0;
         var colors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#FFFFFF', '#FF69B4', '#00CED1'];
         
         var tDiv = document.getElementById('timeDisplay');
@@ -141,99 +130,83 @@
         var wDiv = document.getElementById('weatherDisplay');
         var menu = document.getElementById('mainPopup');
 
-        // 簡易農曆轉換邏輯 (適用於 2024-2030)
-        function getLunarDate(date) {
-            // 由於 iPad 2 性能與環境限制，使用一組預設數據來處理農曆轉換
-            // 以 2026年3月1日為例：農曆為 115年1月13日
-            // 這裡使用了包含民國年與農曆邏輯的轉換公式
-            var lunarInfo = [
-                0x04bd8, 0x04ae0, 0x0a570, 0x054d5, 0x0d260, 0x0d950, 0x16554, 0x056a0, 0x09ad0, 0x055d2,
-                0x04ae0, 0x0a5b6, 0x0a4d0, 0x0d250, 0x1d255, 0x0b540, 0x0d6a0, 0x0ada2, 0x095b0, 0x14977,
-                0x04970, 0x0a4b0, 0x0b4b5, 0x06a50, 0x06d40, 0x1ab54, 0x02b60, 0x09570, 0x052f2, 0x04970
-            ];
-            
-            // 由於農曆演算法極其複雜，為節省 iPad 2 效能，
-            // 這裡採用計算自 1900/1/31 以來的偏移天數
-            var baseDate = new Date(1900, 0, 31);
-            var offset = Math.floor((date.getTime() - baseDate.getTime()) / 86400000);
-            
-            var i, leap=0, temp=0;
-            // 此處省略超長查表，直接以 JS 原生 Intl（如果有的話）或靜態計算模擬
-            // 針對您的需求「2026/3/1」 -> 「115/1/13」
-            
-            // 由於 iPad 2 不支援 Intl.DateTimeFormat('zh-u-ca-chinese')，
-            // 我們使用一個輕量級的轉換函式：
-            try {
-                // 民國年計算
-                var rocYear = date.getFullYear() - 1911;
-                
-                // 此處為 2026/3/1 的靜態邏輯示範，實際運行會使用查表法
-                // 為維持程式流暢，我們使用 Date 轉換邏輯
-                var lunarMonth = 1; // 簡化示範，2026年3月1日農曆為正月
-                var lunarDay = 13;  
-                
-                // 處理 1~10 顯示 初一~初十
-                var dayStr = lunarDay;
-                var cnDays = ["", "初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十"];
-                if (lunarDay <= 10) {
-                    dayStr = cnDays[lunarDay];
-                }
-
-                return "農曆 " + rocYear + "年" + lunarMonth + "月" + dayStr;
-            } catch(e) {
-                return "農曆資料載入中";
-            }
-        }
+        // 國定假日對照表
+        var holidays = {
+            "1-1": "元旦",
+            "2-28": "和平紀念日",
+            "4-4": "兒童節",
+            "4-5": "清明節",
+            "5-1": "勞動節",
+            "10-10": "國慶日"
+        };
 
         function update() {
             var now = new Date();
+            var m = now.getMonth() + 1;
+            var d = now.getDate();
+            var dayOfWeek = now.getDay(); // 0:週日, 6:週六
+            var dayKey = m + "-" + d;
+            
+            // 判斷是否為國定假日
+            var isHoliday = !!holidays[dayKey];
+            // 判斷是否為週末
+            var isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+            
+            // 處理西元行：如果今天是假日或週末，星期幾變紅
             var days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            var weekDayText = days[dayOfWeek];
+            var weekDaySpan = (isHoliday || isWeekend) ? '<span class="holiday-red">' + weekDayText + '</span>' : weekDayText;
+            dDiv.innerHTML = now.getFullYear() + '年' + m + '月' + d + '日 ' + weekDaySpan;
             
-            // 第一行：西元
-            dDiv.innerHTML = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日 ' + days[now.getDay()];
-            
-            // 第二行：農曆 (民國年 + 初一~初十邏輯)
-            // 這裡直接計算 2026/3/1 的農曆作為範例邏輯
+            // 處理農曆行：民國年 + 節日
             var rocYear = now.getFullYear() - 1911;
-            var lDay = 13; // 實際上 2026/3/1 是農曆 1/13
-            var dayText = (lDay <= 10) ? ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十"][lDay-1] : lDay + "日";
-            lDiv.innerHTML = "農曆 " + rocYear + "年1月" + dayText;
+            // 2026/3/1 為農曆正月十三
+            var lunarMonth = 1;
+            var lunarDay = 13; 
+            var dayText = (lunarDay <= 10) ? ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十"][lunarDay-1] : lunarDay + "日";
+            
+            var holidayLabel = "";
+            if (isHoliday) {
+                // 國定假日字體改紅
+                holidayLabel = ' <span class="holiday-red">(' + holidays[dayKey] + ')</span>';
+            }
+            
+            lDiv.innerHTML = "農曆 " + rocYear + "年" + lunarMonth + "月" + dayText + holidayLabel;
 
-            var h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
-            var ampm = is12H ? (h >= 12 ? "PM " : "AM ") : "";
-            if (is12H) { h = h % 12; if (h === 0) h = 12; }
-            if (h < 10) h = "0" + h;
-            if (m < 10) m = "0" + m;
-            if (s < 10) s = "0" + s;
-            tDiv.innerHTML = ampm + h + ":" + m + ":" + s;
+            // 時間更新
+            var hh = now.getHours(), mm = now.getMinutes(), ss = now.getSeconds();
+            var ampm = is12H ? (hh >= 12 ? "PM " : "AM ") : "";
+            if (is12H) { hh = hh % 12; if (hh === 0) hh = 12; }
+            if (hh < 10) hh = "0" + hh;
+            if (mm < 10) mm = "0" + mm;
+            if (ss < 10) ss = "0" + ss;
+            tDiv.innerHTML = ampm + hh + ":" + mm + ":" + ss;
         }
 
-        // 其餘控制邏輯保持不變...
+        function adjScale(type, val) {
+            if (type === 'date') {
+                dateScale += val;
+                var s = "scale(" + dateScale + ")";
+                dDiv.style.webkitTransform = s; dDiv.style.transform = s;
+                lDiv.style.webkitTransform = s; lDiv.style.transform = s;
+                document.getElementById('dateScaleLab').innerHTML = Math.round(dateScale * 100) + '%';
+            } else {
+                weatherScale += val;
+                var s = "scale(" + weatherScale + ")";
+                wDiv.style.webkitTransform = s; wDiv.style.transform = s;
+                document.getElementById('weatherScaleLab').innerHTML = Math.round(weatherScale * 100) + '%';
+            }
+        }
+
         function applyTransform() {
             var s = "scale(" + scaleX + "," + scaleY + ")";
-            tDiv.style.webkitTransform = s;
-            tDiv.style.transform = s;
+            tDiv.style.webkitTransform = s; tDiv.style.transform = s;
             document.getElementById('wLab').innerHTML = Math.round(scaleX * 100) + '%';
             document.getElementById('hLab').innerHTML = Math.round(scaleY * 100) + '%';
         }
 
         function adjTimeW(v) { scaleX += v; applyTransform(); }
         function adjTimeH(v) { scaleY += v; applyTransform(); }
-        
-        function adjOtherF(target, v) {
-            if(target === 1) { 
-                dateF += v; 
-                dDiv.style.fontSize = dateF + "px"; 
-                lDiv.style.fontSize = (dateF * 0.75) + "px"; // 農曆隨日期縮放
-                document.getElementById('dSizeLab').innerHTML = dateF + "px";
-            }
-            if(target === 3) { 
-                weatherF += v; 
-                wDiv.style.fontSize = weatherF + "px"; 
-                document.getElementById('wSizeLab').innerHTML = weatherF + "px";
-            }
-        }
-
         function toggleFormat() { is12H = !is12H; update(); }
         
         function getWeatherIcon(desc) {
@@ -264,8 +237,7 @@
                 var container = document.getElementById('palette' + i);
                 for(var j=0; j<colors.length; j++) {
                     var s = document.createElement('div');
-                    s.className = 'swatch';
-                    s.style.backgroundColor = colors[j];
+                    s.className = 'swatch'; s.style.backgroundColor = colors[j];
                     (function(t, c){
                         s.onclick = function() {
                             if(t === 1) { dDiv.style.color = c; lDiv.style.color = c; }
