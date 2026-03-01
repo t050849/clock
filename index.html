@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>iPad 2 時鐘 - 全功能微調版</title>
+    <title>iPad 2 時鐘 - 最終格式版</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body, html {
@@ -39,9 +39,11 @@
         }
         
         .holiday-red { color: #FF0000 !important; }
-        .location-text { margin-right: 10px; }
+        .location-text { margin-right: 12px; }
         .temp-text { margin-right: 15px; }
-        .weather-icon { display: inline-block; margin-right: 10px; font-size: 1.2em; }
+        .weather-label { font-size: 0.9em; margin-right: 5px; }
+        .weather-icon { display: inline-block; margin-right: 15px; font-size: 1.1em; }
+        .rain-label { font-size: 0.9em; margin-right: 5px; }
         .rain-chance { color: #00CED1; font-size: 0.9em; }
 
         .control-button {
@@ -85,58 +87,16 @@
         <button class="btn" style="width:100%" onclick="toggleFormat()">切換 12/24H 制</button>
 
         <div class="section-title">文字位置 (方向鍵)</div>
-        <div class="pos-row">
-            <span class="pos-label">西元日期</span>
-            <button class="btn btn-sm" onclick="adjPos('date', 'x', -5)">←</button>
-            <button class="btn btn-sm" onclick="adjPos('date', 'x', 5)">→</button>
-            <button class="btn btn-sm" onclick="adjPos('date', 'y', -5)">↑</button>
-            <button class="btn btn-sm" onclick="adjPos('date', 'y', 5)">↓</button>
-        </div>
-        <div class="pos-row">
-            <span class="pos-label">農曆日期</span>
-            <button class="btn btn-sm" onclick="adjPos('lunar', 'x', -5)">←</button>
-            <button class="btn btn-sm" onclick="adjPos('lunar', 'x', 5)">→</button>
-            <button class="btn btn-sm" onclick="adjPos('lunar', 'y', -5)">↑</button>
-            <button class="btn btn-sm" onclick="adjPos('lunar', 'y', 5)">↓</button>
-        </div>
-        <div class="pos-row">
-            <span class="pos-label">中央時間</span>
-            <button class="btn btn-sm" onclick="adjPos('time', 'x', -5)">←</button>
-            <button class="btn btn-sm" onclick="adjPos('time', 'x', 5)">→</button>
-            <button class="btn btn-sm" onclick="adjPos('time', 'y', -5)">↑</button>
-            <button class="btn btn-sm" onclick="adjPos('time', 'y', 5)">↓</button>
-        </div>
-        <div class="pos-row">
-            <span class="pos-label">底部天氣</span>
-            <button class="btn btn-sm" onclick="adjPos('weather', 'x', -5)">←</button>
-            <button class="btn btn-sm" onclick="adjPos('weather', 'x', 5)">→</button>
-            <button class="btn btn-sm" onclick="adjPos('weather', 'y', -5)">↑</button>
-            <button class="btn btn-sm" onclick="adjPos('weather', 'y', 5)">↓</button>
-        </div>
+        <div class="pos-row"><span class="pos-label">西元日期</span><button class="btn btn-sm" onclick="adjPos('date', 'x', -5)">←</button><button class="btn btn-sm" onclick="adjPos('date', 'x', 5)">→</button><button class="btn btn-sm" onclick="adjPos('date', 'y', -5)">↑</button><button class="btn btn-sm" onclick="adjPos('date', 'y', 5)">↓</button></div>
+        <div class="pos-row"><span class="pos-label">農曆日期</span><button class="btn btn-sm" onclick="adjPos('lunar', 'x', -5)">←</button><button class="btn btn-sm" onclick="adjPos('lunar', 'x', 5)">→</button><button class="btn btn-sm" onclick="adjPos('lunar', 'y', -5)">↑</button><button class="btn btn-sm" onclick="adjPos('lunar', 'y', 5)">↓</button></div>
+        <div class="pos-row"><span class="pos-label">中央時間</span><button class="btn btn-sm" onclick="adjPos('time', 'x', -5)">←</button><button class="btn btn-sm" onclick="adjPos('time', 'x', 5)">→</button><button class="btn btn-sm" onclick="adjPos('time', 'y', -5)">↑</button><button class="btn btn-sm" onclick="adjPos('time', 'y', 5)">↓</button></div>
+        <div class="pos-row"><span class="pos-label">底部天氣</span><button class="btn btn-sm" onclick="adjPos('weather', 'x', -5)">←</button><button class="btn btn-sm" onclick="adjPos('weather', 'x', 5)">→</button><button class="btn btn-sm" onclick="adjPos('weather', 'y', -5)">↑</button><button class="btn btn-sm" onclick="adjPos('weather', 'y', 5)">↓</button></div>
 
         <div class="section-title">字體縮放 (大小)</div>
-        <div class="pos-row">
-            <span class="pos-label">西元日期</span>
-            <button class="btn" style="flex:1" onclick="adjScale('date', -0.05)">小 -</button>
-            <button class="btn" style="flex:1" onclick="adjScale('date', 0.05)">大 +</button>
-        </div>
-        <div class="pos-row">
-            <span class="pos-label">農曆日期</span>
-            <button class="btn" style="flex:1" onclick="adjScale('lunar', -0.05)">小 -</button>
-            <button class="btn" style="flex:1" onclick="adjScale('lunar', 0.05)">大 +</button>
-        </div>
-        <div class="pos-row">
-            <span class="pos-label">時間(寬/高)</span>
-            <button class="btn btn-sm" onclick="adjTimeScale('x', -0.05)">W-</button>
-            <button class="btn btn-sm" onclick="adjTimeScale('x', 0.05)">W+</button>
-            <button class="btn btn-sm" onclick="adjTimeScale('y', -0.1)">H-</button>
-            <button class="btn btn-sm" onclick="adjTimeScale('y', 0.1)">H+</button>
-        </div>
-        <div class="pos-row">
-            <span class="pos-label">底部天氣</span>
-            <button class="btn" style="flex:1" onclick="adjScale('weather', -0.1)">小 -</button>
-            <button class="btn" style="flex:1" onclick="adjScale('weather', 0.1)">大 +</button>
-        </div>
+        <div class="pos-row"><span class="pos-label">西元日期</span><button class="btn" style="flex:1" onclick="adjScale('date', -0.05)">小 -</button><button class="btn" style="flex:1" onclick="adjScale('date', 0.05)">大 +</button></div>
+        <div class="pos-row"><span class="pos-label">農曆日期</span><button class="btn" style="flex:1" onclick="adjScale('lunar', -0.05)">小 -</button><button class="btn" style="flex:1" onclick="adjScale('lunar', 0.05)">大 +</button></div>
+        <div class="pos-row"><span class="pos-label">時間比例</span><button class="btn btn-sm" onclick="adjTimeScale('x', -0.05)">W-</button><button class="btn btn-sm" onclick="adjTimeScale('x', 0.05)">W+</button><button class="btn btn-sm" onclick="adjTimeScale('y', -0.1)">H-</button><button class="btn btn-sm" onclick="adjTimeScale('y', 0.1)">H+</button></div>
+        <div class="pos-row"><span class="pos-label">底部天氣</span><button class="btn" style="flex:1" onclick="adjScale('weather', -0.1)">小 -</button><button class="btn" style="flex:1" onclick="adjScale('weather', 0.1)">大 +</button></div>
 
         <div class="section-title">字體顏色</div>
         <div id="palette1" class="color-row"></div>
@@ -148,7 +108,6 @@
 
     <script>
         var is12H = true;
-        // 初始化各行狀態
         var state = {
             date: { scale: 1.0, x: 0, y: 0 },
             lunar: { scale: 1.0, x: 0, y: 0 },
@@ -176,7 +135,6 @@
             dDiv.innerHTML = now.getFullYear() + '年' + m + '月' + d + '日 ' + weekDaySpan;
             
             var rocYear = now.getFullYear() - 1911;
-            // 2026/3/1 農曆正月十三
             var lunarMonth = 1, lunarDay = 13; 
             var dayText = (lunarDay <= 10) ? ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十"][lunarDay-1] : lunarDay + "日";
             var holidayLabel = isHoliday ? ' <span class="holiday-red">(' + holidays[dayKey] + ')</span>' : "";
@@ -194,33 +152,17 @@
         function applyAllTransforms() {
             dDiv.style.webkitTransform = "translate("+state.date.x+"px, "+state.date.y+"px) scale("+state.date.scale+")";
             dDiv.style.transform = dDiv.style.webkitTransform;
-
             lDiv.style.webkitTransform = "translate("+state.lunar.x+"px, "+state.lunar.y+"px) scale("+state.lunar.scale+")";
             lDiv.style.transform = lDiv.style.webkitTransform;
-
             tDiv.style.webkitTransform = "translate("+state.time.x+"px, "+state.time.y+"px) scale("+state.time.sx+", "+state.time.sy+")";
             tDiv.style.transform = tDiv.style.webkitTransform;
-
             wDiv.style.webkitTransform = "translate("+state.weather.x+"px, "+state.weather.y+"px) scale("+state.weather.scale+")";
             wDiv.style.transform = wDiv.style.webkitTransform;
         }
 
-        function adjPos(target, axis, val) {
-            state[target][axis] += val;
-            applyAllTransforms();
-        }
-
-        function adjScale(type, val) {
-            state[type].scale += val;
-            applyAllTransforms();
-        }
-
-        function adjTimeScale(axis, val) {
-            if(axis === 'x') state.time.sx += val;
-            else state.time.sy += val;
-            applyAllTransforms();
-        }
-
+        function adjPos(target, axis, val) { state[target][axis] += val; applyAllTransforms(); }
+        function adjScale(type, val) { state[type].scale += val; applyAllTransforms(); }
+        function adjTimeScale(axis, val) { if(axis === 'x') state.time.sx += val; else state.time.sy += val; applyAllTransforms(); }
         function toggleFormat() { is12H = !is12H; update(); }
         
         function getWeather() {
@@ -231,9 +173,18 @@
                 if (xhr.readyState == 4 && xhr.status == 200) {
                     var data = JSON.parse(xhr.responseText);
                     var temp = Math.round(data.main.temp);
-                    var icon = (data.weather[0].description.includes('晴')) ? '☀️' : '☁️';
+                    var desc = data.weather[0].description;
+                    var icon = desc.includes('晴') ? '☀️' : (desc.includes('雨') ? '☔' : '☁️');
                     var rain = data.clouds ? data.clouds.all : 0;
-                    wDiv.innerHTML = '<span class="location-text">新興里</span><span class="temp-text">'+temp+'°C</span><span class="weather-icon">'+icon+'</span><span class="rain-chance">☔ '+rain+'%</span>';
+                    
+                    // 修改後的格式：地點 -> 溫度 -> 天氣: ICON -> 降雨機率: %
+                    wDiv.innerHTML = 
+                        '<span class="location-text">新興里</span>' +
+                        '<span class="temp-text">' + temp + '°C</span>' +
+                        '<span class="weather-label">天氣:</span>' +
+                        '<span class="weather-icon">' + icon + '</span>' +
+                        '<span class="rain-label">降雨機率:</span>' +
+                        '<span class="rain-chance">' + rain + '%</span>';
                 }
             };
             xhr.send();
