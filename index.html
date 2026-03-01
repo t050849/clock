@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>iPad 2 智慧節慶時鐘 - 精確位移版</title>
+    <title>iPad 2 時鐘 - 全功能微調版</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body, html {
@@ -14,7 +14,6 @@
             overflow: hidden;
         }
 
-        /* 基礎定位 */
         .top-section { position: absolute; top: 60px; left: 40px; }
         .bottom-section { position: absolute; bottom: 40px; left: 40px; right: 40px; }
         .middle-section { 
@@ -22,7 +21,6 @@
             -webkit-transform: translateY(-50%); transform: translateY(-50%);
         }
 
-        /* 預設樣式 */
         .date-display { 
             font-size: 32px; color: #FFFF00; font-weight: bold; display: block;
             -webkit-transform-origin: left top; transform-origin: left top;
@@ -46,25 +44,22 @@
         .weather-icon { display: inline-block; margin-right: 10px; font-size: 1.2em; }
         .rain-chance { color: #00CED1; font-size: 0.9em; }
 
-        /* 控制按鈕 */
         .control-button {
             position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; 
             background: rgba(255,255,0,0.1); border: 1px solid rgba(255,255,0,0.3); border-radius: 15px;
         }
 
-        /* 設定面板樣式優化 */
         .main-popup {
             position: absolute; bottom: 40px; right: 10px; background: rgba(10, 10, 10, 0.98); 
-            border: 2px solid #FFFF00; padding: 15px; display: none; z-index: 1000; width: 320px;
+            border: 2px solid #FFFF00; padding: 15px; display: none; z-index: 1000; width: 340px;
             max-height: 85%; overflow-y: scroll; -webkit-overflow-scrolling: touch;
         }
         .show { display: block; }
         .section-title { color: #FFFF00; font-size: 13px; margin: 15px 0 8px; text-align: center; border-top: 1px dotted #444; padding-top: 10px; }
         .pos-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; background: #222; padding: 5px; border-radius: 4px; }
-        .pos-label { color: #fff; font-size: 11px; width: 60px; }
+        .pos-label { color: #fff; font-size: 11px; width: 60px; font-weight: bold; }
         .btn { background: #333; color: #FFFF00; border: 1px solid #FFFF00; padding: 6px; margin: 2px; border-radius: 4px; font-size: 12px; }
         .btn-sm { width: 35px; font-weight: bold; }
-        .val-lab { color: #0f0; font-size: 11px; min-width: 30px; text-align: center; }
         .swatch { display: inline-block; width: 25px; height: 25px; margin: 3px; border: 1px solid #666; border-radius: 3px; }
     </style>
 </head>
@@ -89,7 +84,7 @@
     <div id="mainPopup" class="main-popup">
         <button class="btn" style="width:100%" onclick="toggleFormat()">切換 12/24H 制</button>
 
-        <div class="section-title">位置微調 (X, Y軸)</div>
+        <div class="section-title">文字位置 (方向鍵)</div>
         <div class="pos-row">
             <span class="pos-label">西元日期</span>
             <button class="btn btn-sm" onclick="adjPos('date', 'x', -5)">←</button>
@@ -119,7 +114,17 @@
             <button class="btn btn-sm" onclick="adjPos('weather', 'y', 5)">↓</button>
         </div>
 
-        <div class="section-title">縮放比例</div>
+        <div class="section-title">字體縮放 (大小)</div>
+        <div class="pos-row">
+            <span class="pos-label">西元日期</span>
+            <button class="btn" style="flex:1" onclick="adjScale('date', -0.05)">小 -</button>
+            <button class="btn" style="flex:1" onclick="adjScale('date', 0.05)">大 +</button>
+        </div>
+        <div class="pos-row">
+            <span class="pos-label">農曆日期</span>
+            <button class="btn" style="flex:1" onclick="adjScale('lunar', -0.05)">小 -</button>
+            <button class="btn" style="flex:1" onclick="adjScale('lunar', 0.05)">大 +</button>
+        </div>
         <div class="pos-row">
             <span class="pos-label">時間(寬/高)</span>
             <button class="btn btn-sm" onclick="adjTimeScale('x', -0.05)">W-</button>
@@ -128,11 +133,9 @@
             <button class="btn btn-sm" onclick="adjTimeScale('y', 0.1)">H+</button>
         </div>
         <div class="pos-row">
-            <span class="pos-label">日期/天氣</span>
-            <button class="btn btn-sm" onclick="adjScale('date', -0.1)">D-</button>
-            <button class="btn btn-sm" onclick="adjScale('date', 0.1)">D+</button>
-            <button class="btn btn-sm" onclick="adjScale('weather', -0.1)">W-</button>
-            <button class="btn btn-sm" onclick="adjScale('weather', 0.1)">W+</button>
+            <span class="pos-label">底部天氣</span>
+            <button class="btn" style="flex:1" onclick="adjScale('weather', -0.1)">小 -</button>
+            <button class="btn" style="flex:1" onclick="adjScale('weather', 0.1)">大 +</button>
         </div>
 
         <div class="section-title">字體顏色</div>
@@ -145,7 +148,7 @@
 
     <script>
         var is12H = true;
-        // 狀態物件
+        // 初始化各行狀態
         var state = {
             date: { scale: 1.0, x: 0, y: 0 },
             lunar: { scale: 1.0, x: 0, y: 0 },
@@ -173,9 +176,11 @@
             dDiv.innerHTML = now.getFullYear() + '年' + m + '月' + d + '日 ' + weekDaySpan;
             
             var rocYear = now.getFullYear() - 1911;
-            var dayText = (d <= 10 && m === 1) ? "示範日期" : d + "日"; // 這裡維持簡化農曆邏輯
+            // 2026/3/1 農曆正月十三
+            var lunarMonth = 1, lunarDay = 13; 
+            var dayText = (lunarDay <= 10) ? ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十"][lunarDay-1] : lunarDay + "日";
             var holidayLabel = isHoliday ? ' <span class="holiday-red">(' + holidays[dayKey] + ')</span>' : "";
-            lDiv.innerHTML = "農曆 " + rocYear + "年1月" + dayText + holidayLabel;
+            lDiv.innerHTML = "農曆 " + rocYear + "年" + lunarMonth + "月" + dayText + holidayLabel;
 
             var hh = now.getHours(), mm = now.getMinutes(), ss = now.getSeconds();
             var ampm = is12H ? (hh >= 12 ? "PM " : "AM ") : "";
@@ -186,12 +191,11 @@
             tDiv.innerHTML = ampm + hh + ":" + mm + ":" + ss;
         }
 
-        // 核心：應用所有轉換效果
         function applyAllTransforms() {
             dDiv.style.webkitTransform = "translate("+state.date.x+"px, "+state.date.y+"px) scale("+state.date.scale+")";
             dDiv.style.transform = dDiv.style.webkitTransform;
 
-            lDiv.style.webkitTransform = "translate("+state.lunar.x+"px, "+state.lunar.y+"px) scale("+state.date.scale+")";
+            lDiv.style.webkitTransform = "translate("+state.lunar.x+"px, "+state.lunar.y+"px) scale("+state.lunar.scale+")";
             lDiv.style.transform = lDiv.style.webkitTransform;
 
             tDiv.style.webkitTransform = "translate("+state.time.x+"px, "+state.time.y+"px) scale("+state.time.sx+", "+state.time.sy+")";
@@ -201,13 +205,11 @@
             wDiv.style.transform = wDiv.style.webkitTransform;
         }
 
-        // 位置調整函式
         function adjPos(target, axis, val) {
             state[target][axis] += val;
             applyAllTransforms();
         }
 
-        // 縮放調整函式
         function adjScale(type, val) {
             state[type].scale += val;
             applyAllTransforms();
