@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>iPad 2 智慧節慶時鐘</title>
+    <title>iPad 2 智慧節慶時鐘 - 佈局修正版</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body, html {
@@ -14,7 +14,8 @@
             overflow: hidden;
         }
 
-        .top-section { position: absolute; top: 30px; left: 40px; }
+        /* 頂部區域向下移動，避免放大後跑出畫面 */
+        .top-section { position: absolute; top: 60px; left: 40px; }
         .bottom-section { position: absolute; bottom: 40px; left: 40px; right: 40px; }
 
         .middle-section { 
@@ -25,14 +26,13 @@
         .date-container { display: flex; flex-direction: column; }
         .date-display { 
             font-size: 32px; color: #FFFF00; font-weight: bold; line-height: 1.1;
-            -webkit-transform-origin: left bottom; transform-origin: left bottom;
+            -webkit-transform-origin: left top; transform-origin: left top;
         }
         .lunar-display { 
-            font-size: 22px; color: #FFFF00; font-weight: bold; line-height: 1.1; margin-top: 2px;
+            font-size: 22px; color: #FFFF00; font-weight: bold; line-height: 1.1; margin-top: 5px;
             -webkit-transform-origin: left top; transform-origin: left top;
         }
         
-        /* 假日紅色的特定樣式 */
         .holiday-red { color: #FF0000 !important; }
 
         .time-display { 
@@ -45,8 +45,11 @@
             -webkit-transform-origin: left bottom; transform-origin: left bottom;
         }
         
-        .weather-icon { display: inline-block; margin-right: 12px; font-size: 1.2em; }
-        .rain-chance { color: #00CED1; margin-right: 15px; font-size: 0.9em; }
+        /* 調整間距，配合新的排序 */
+        .location-text { margin-right: 10px; }
+        .temp-text { margin-right: 15px; }
+        .weather-icon { display: inline-block; margin-right: 10px; font-size: 1.2em; }
+        .rain-chance { color: #00CED1; font-size: 0.9em; }
 
         .control-button {
             position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; 
@@ -82,7 +85,7 @@
 
     <div class="bottom-section">
         <div id="weatherDisplay" class="weather-display">
-            <span class="weather-icon">📡</span> 定位中...
+            <span class="location-text">📡 讀取中...</span>
         </div>
         <button id="controlBtn" class="control-button"></button>
     </div>
@@ -130,50 +133,25 @@
         var wDiv = document.getElementById('weatherDisplay');
         var menu = document.getElementById('mainPopup');
 
-        // 國定假日對照表
-        var holidays = {
-            "1-1": "元旦",
-            "2-28": "和平紀念日",
-            "4-4": "兒童節",
-            "4-5": "清明節",
-            "5-1": "勞動節",
-            "10-10": "國慶日"
-        };
+        var holidays = { "1-1": "元旦", "2-28": "和平紀念日", "4-4": "兒童節", "4-5": "清明節", "5-1": "勞動節", "10-10": "國慶日" };
 
         function update() {
             var now = new Date();
-            var m = now.getMonth() + 1;
-            var d = now.getDate();
-            var dayOfWeek = now.getDay(); // 0:週日, 6:週六
+            var m = now.getMonth() + 1, d = now.getDate(), dayOfWeek = now.getDay();
             var dayKey = m + "-" + d;
+            var isHoliday = !!holidays[dayKey], isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
             
-            // 判斷是否為國定假日
-            var isHoliday = !!holidays[dayKey];
-            // 判斷是否為週末
-            var isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-            
-            // 處理西元行：如果今天是假日或週末，星期幾變紅
             var days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
-            var weekDayText = days[dayOfWeek];
-            var weekDaySpan = (isHoliday || isWeekend) ? '<span class="holiday-red">' + weekDayText + '</span>' : weekDayText;
+            var weekDaySpan = (isHoliday || isWeekend) ? '<span class="holiday-red">' + days[dayOfWeek] + '</span>' : days[dayOfWeek];
             dDiv.innerHTML = now.getFullYear() + '年' + m + '月' + d + '日 ' + weekDaySpan;
             
-            // 處理農曆行：民國年 + 節日
+            // 農曆邏輯示範 (2026/3/1)
             var rocYear = now.getFullYear() - 1911;
-            // 2026/3/1 為農曆正月十三
-            var lunarMonth = 1;
-            var lunarDay = 13; 
+            var lunarMonth = 1, lunarDay = 13; 
             var dayText = (lunarDay <= 10) ? ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十"][lunarDay-1] : lunarDay + "日";
-            
-            var holidayLabel = "";
-            if (isHoliday) {
-                // 國定假日字體改紅
-                holidayLabel = ' <span class="holiday-red">(' + holidays[dayKey] + ')</span>';
-            }
-            
+            var holidayLabel = isHoliday ? ' <span class="holiday-red">(' + holidays[dayKey] + ')</span>' : "";
             lDiv.innerHTML = "農曆 " + rocYear + "年" + lunarMonth + "月" + dayText + holidayLabel;
 
-            // 時間更新
             var hh = now.getHours(), mm = now.getMinutes(), ss = now.getSeconds();
             var ampm = is12H ? (hh >= 12 ? "PM " : "AM ") : "";
             if (is12H) { hh = hh % 12; if (hh === 0) hh = 12; }
@@ -226,7 +204,13 @@
                     var temp = Math.round(data.main.temp);
                     var icon = getWeatherIcon(data.weather[0].description);
                     var rain = data.clouds ? data.clouds.all : 0;
-                    wDiv.innerHTML = '<span class="weather-icon">'+icon+'</span><span class="rain-chance">☔ '+rain+'%</span> 新興里 '+temp+'°C';
+                    
+                    // 重新排列：新興里 -> 22°C -> ICON -> 降雨機率
+                    wDiv.innerHTML = 
+                        '<span class="location-text">新興里</span>' +
+                        '<span class="temp-text">' + temp + '°C</span>' +
+                        '<span class="weather-icon">' + icon + '</span>' +
+                        '<span class="rain-chance">☔ ' + rain + '%</span>';
                 }
             };
             xhr.send();
