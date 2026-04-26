@@ -170,6 +170,14 @@
             var xhr = new XMLHttpRequest();
             xhr.open('GET', url, true);
             xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4) {
+        if (xhr.status == 200) {
+            // ...原本處理資料的程式碼...
+        } else {
+            // 如果失敗，在天氣欄位顯示錯誤代碼
+            document.getElementById('weatherDisplay').innerHTML = "連線失敗: " + xhr.status;
+        }
+    }
                 if (xhr.readyState == 4 && xhr.status == 200) {
                     var data = JSON.parse(xhr.responseText);
                     var temp = Math.round(data.main.temp);
