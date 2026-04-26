@@ -78,7 +78,7 @@
 
     <div class="bottom-section">
         <div id="weatherDisplay" class="weather-display">
-            <span class="location-text">讀取���...</span>
+            <span class="location-text">讀取中...</span>
         </div>
         <button id="controlBtn" class="control-button"></button>
     </div>
@@ -95,7 +95,7 @@
         <div class="section-title">字體縮放 (大小)</div>
         <div class="pos-row"><span class="pos-label">西元日期</span><button class="btn" style="flex:1" onclick="adjScale('date', -0.05)">小 -</button><button class="btn" style="flex:1" onclick="adjScale('date', 0.05)">大 +</button></div>
         <div class="pos-row"><span class="pos-label">農曆日期</span><button class="btn" style="flex:1" onclick="adjScale('lunar', -0.05)">小 -</button><button class="btn" style="flex:1" onclick="adjScale('lunar', 0.05)">大 +</button></div>
-        <div class="pos-row"><span class="pos-label">時間比例</span><button class="btn btn-sm" onclick="adjTimeScale('x', -0.05)">W-</button><button class="btn btn-sm" onclick="adjTimeScale('x', 0.05)">W+</button><button class="btn btn-sm" onclick="adjTimeScale('y', -0.05)">H-</button><button class="btn btn-sm" onclick="adjTimeScale('y', 0.05)">H+</button></div>
+        <div class="pos-row"><span class="pos-label">時間比例</span><button class="btn btn-sm" onclick="adjTimeScale('x', -0.05)">W-</button><button class="btn btn-sm" onclick="adjTimeScale('x', 0.05)">W+</button><button class="btn btn-sm" onclick="adjTimeScale('y', -0.1)">H-</button><button class="btn btn-sm" onclick="adjTimeScale('y', 0.1)">H+</button></div>
         <div class="pos-row"><span class="pos-label">底部天氣</span><button class="btn" style="flex:1" onclick="adjScale('weather', -0.1)">小 -</button><button class="btn" style="flex:1" onclick="adjScale('weather', 0.1)">大 +</button></div>
 
         <div class="section-title">字體顏色</div>
@@ -168,43 +168,25 @@
         function getWeather() {
             var url = 'https://api.openweathermap.org/data/2.5/weather?lat=25.0074129&lon=121.2685473&appid=5d13f280068f27e7b123c2b25149a95c&units=metric&lang=zh_tw';
             var xhr = new XMLHttpRequest();
-            xhr.timeout = 8000;
             xhr.open('GET', url, true);
-            
             xhr.onreadystatechange = function() {
-                if (xhr.readyState == 4) {
-                    if (xhr.status == 200) {
-                        try {
-                            var data = JSON.parse(xhr.responseText);
-                            var temp = Math.round(data.main.temp);
-                            var desc = data.weather[0].description;
-                            var icon = desc.includes('晴') ? '☀️' : (desc.includes('雨') ? '☔' : '☁️');
-                            var rain = data.clouds ? data.clouds.all : 0;
-                            
-                            wDiv.innerHTML = 
-                                '<span class="location-text">新興里</span>' +
-                                '<span class="temp-text">' + temp + '°C</span>' +
-                                '<span class="weather-label">天氣:</span>' +
-                                '<span class="weather-icon">' + icon + '</span>' +
-                                '<span class="rain-label">降雨機率:</span>' +
-                                '<span class="rain-chance">' + rain + '%</span>';
-                        } catch(e) {
-                            wDiv.innerHTML = '<span class="location-text">天氣資訊異常</span>';
-                        }
-                    } else {
-                        wDiv.innerHTML = '<span class="location-text">無法取得天氣</span>';
-                    }
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var data = JSON.parse(xhr.responseText);
+                    var temp = Math.round(data.main.temp);
+                    var desc = data.weather[0].description;
+                    var icon = desc.includes('晴') ? '☀️' : (desc.includes('雨') ? '☔' : '☁️');
+                    var rain = data.clouds ? data.clouds.all : 0;
+                    
+                    // 修改後的格式：地點 -> 溫度 -> 天氣: ICON -> 降雨機率: %
+                    wDiv.innerHTML = 
+                        '<span class="location-text">新興里</span>' +
+                        '<span class="temp-text">' + temp + '°C</span>' +
+                        '<span class="weather-label">天氣:</span>' +
+                        '<span class="weather-icon">' + icon + '</span>' +
+                        '<span class="rain-label">降雨機率:</span>' +
+                        '<span class="rain-chance">' + rain + '%</span>';
                 }
             };
-            
-            xhr.onerror = function() {
-                wDiv.innerHTML = '<span class="location-text">網路錯誤</span>';
-            };
-            
-            xhr.ontimeout = function() {
-                wDiv.innerHTML = '<span class="location-text">連線逾時</span>';
-            };
-            
             xhr.send();
         }
 
