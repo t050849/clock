@@ -166,7 +166,7 @@
         function toggleFormat() { is12H = !is12H; update(); }
         
         function getWeather() {
-            var url = 'https://api.openweathermap.org/data/2.5/weather?lat=25.0074129&lon=121.2685473&appid=5d13f280068f27e7b123c2b25149a95c&units=metric&lang=zh_tw';
+            var url = 'http://api.openweathermap.org/data/2.5/weather?lat=25.0074129&lon=121.2685473&appid=5d13f280068f27e7b123c2b25149a95c&units=metric&lang=zh_tw';
             var xhr = new XMLHttpRequest();
             xhr.open('GET', url, true);
             xhr.onreadystatechange = function() {
