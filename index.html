@@ -4,92 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>iPad 2 Clock Legacy</title>
+    <title>iPad 2 Touch Fix</title>
     <style>
-        /* 避免使用 Flexbox，改用絕對定位與傳統 Box Model */
         * { margin: 0; padding: 0; }
         body, html {
             width: 100%; height: 100%;
             background-color: #000;
             font-family: Helvetica, Arial, sans-serif;
             overflow: hidden; color: #fff;
+            /* 關鍵：強迫 iOS 識別點擊區域 */
+            cursor: pointer; 
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
         }
 
+        /* 顯示層 */
         .layer { 
-            position: absolute; 
-            left: 40px; 
-            white-space: nowrap; 
+            position: absolute; left: 40px; white-space: nowrap; 
             -webkit-transform-origin: left center;
+            pointer-events: none; /* 讓點擊穿透文字 */
         }
-        
         #dateLayer    { top: 60px; }
         #lunarLayer   { top: 115px; }
         #timeLayer    { top: 180px; }
         #weatherLayer { bottom: 60px; }
 
-        .date-txt    { font-size: 32px; font-weight: bold; }
-        .lunar-txt   { font-size: 22px; font-weight: bold; }
-        .time-txt    { font-size: 160px; font-weight: bold; }
+        .date-txt { font-size: 32px; font-weight: bold; }
+        .lunar-txt { font-size: 22px; font-weight: bold; }
+        .time-txt { font-size: 160px; font-weight: bold; }
         .weather-txt { font-size: 28px; font-weight: bold; }
-        
         .holiday-red { color: #FF0000 !important; }
 
-        /* 設定選單 - 使用傳統佈局 */
-        .main-popup {
+        /* 設定選單 - 傳統定位 */
+        #mainPopup {
             position: absolute; 
-            top: 50px; left: 50px;
-            background: #111; 
-            border: 2px solid #FFFF00;
-            padding: 15px; 
-            display: none; z-index: 1000; width: 340px; 
-            box-shadow: 0 0 20px #000;
+            top: 20px; left: 20px; right: 20px; bottom: 20px;
+            background: #111; border: 2px solid #FFFF00;
+            padding: 15px; display: none; z-index: 9999;
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
         }
-        .show { display: block !important; }
 
-        .row-group { margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .row-title { color: #FFFF00; font-size: 14px; font-weight: bold; }
-        .ctrl-row { margin: 5px 0; background: #222; padding: 5px; }
-        .label { font-size: 11px; color: #ccc; display: inline-block; width: 60px; }
+        .row-group { margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        .row-title { color: #FFFF00; font-size: 16px; font-weight: bold; margin-bottom: 5px; }
+        .ctrl-row { margin: 5px 0; background: #222; padding: 8px; }
+        .label { font-size: 12px; color: #ccc; display: inline-block; width: 60px; }
         
         .btn { 
             background: #444; color: #FFFF00; border: 1px solid #555; 
-            width: 45px; height: 35px; font-weight: bold; margin-right: 2px;
-            vertical-align: middle;
+            width: 50px; height: 40px; font-weight: bold; margin-right: 4px;
+            font-size: 16px; vertical-align: middle;
         }
         
-        .color-bar { margin-top: 5px; }
         .swatch { 
-            display: inline-block; width: 25px; height: 25px; 
-            margin: 2px; border: 1px solid #fff; 
+            display: inline-block; width: 30px; height: 30px; 
+            margin: 4px; border: 1px solid #fff; 
         }
     </style>
 </head>
-<body id="mainBody">
+
+<body id="mainBody" ontouchstart="openMenu()">
 
     <div id="dateLayer" class="layer"><div id="dateDisplay" class="date-txt"></div></div>
     <div id="lunarLayer" class="layer"><div id="lunarDisplay" class="lunar-txt"></div></div>
     <div id="timeLayer" class="layer"><div id="timeDisplay" class="time-txt">00:00:00</div></div>
-    <div id="weatherLayer" class="layer"><div id="weatherDisplay" class="weather-txt">Weather Loading...</div></div>
+    <div id="weatherLayer" class="layer"><div id="weatherDisplay" class="weather-txt">Loading...</div></div>
 
-    <div id="mainPopup" class="main-popup">
-        <div style="margin-bottom:10px;">
-            <button class="btn" style="width:100px" onclick="toggleFormat(event)">12/24H</button>
-            <button class="btn" style="width:100px; background:#400; color:#fff;" onclick="resetAll(event)">RESET</button>
+    <div id="mainPopup" ontouchstart="event.stopPropagation()">
+        <div style="margin-bottom:15px;">
+            <button class="btn" style="width:120px" onclick="toggleFormat(event)">12/24H</button>
+            <button class="btn" style="width:120px; background:#400; color:#fff;" onclick="resetAll(event)">RESET</button>
         </div>
+        
         <div id="controlsContainer"></div>
-        <button class="btn" style="width:100%; margin-top:10px; height:40px;" onclick="closeMenu(event)">CLOSE</button>
+        
+        <button class="btn" style="width:100%; margin-top:20px; height:50px; background:#333;" onclick="closeMenu(event)">SAVE & CLOSE</button>
     </div>
 
     <script>
-        // 全部改回 ES5 語法 (var, function, 無 arrow function)
         var keys = ['date', 'lunar', 'time', 'weather'];
         var names = { date:'DATE', lunar:'LUNAR', time:'TIME', weather:'WEATHER' };
         var is12H = true;
         var state;
 
-        // 傳統 JSON 讀取
+        // 初始化資料
         try {
-            var saved = localStorage.getItem('clock_ipad2_final');
+            var saved = localStorage.getItem('clock_ipad2_v6');
             state = saved ? JSON.parse(saved) : {
                 date:    { x: 0, y: 0, w: 1.0, h: 1.0, c: '#FFFF00' },
                 lunar:   { x: 0, y: 0, w: 1.0, h: 1.0, c: '#FFFF00' },
@@ -97,11 +95,42 @@
                 weather: { x: 0, y: 0, w: 1.0, h: 1.0, c: '#FFFF00' }
             };
         } catch(e) {
-            state = { /* 略過備份 */ };
+            state = { date:{x:0,y:0,w:1,h:1,c:'#FF0'}, lunar:{x:0,y:0,w:1,h:1,c:'#FF0'}, time:{x:0,y:0,w:1,h:1,c:'#FFF'}, weather:{x:0,y:0,w:1,h:1,c:'#FF0'} };
         }
 
         var colors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#00FFFF', '#007AFF', '#FFFFFF', '#FF69B4'];
 
+        // --- 核心功能 ---
+        function openMenu() {
+            document.getElementById('mainPopup').style.display = 'block';
+        }
+
+        function closeMenu(e) {
+            if(e && e.stopPropagation) e.stopPropagation();
+            document.getElementById('mainPopup').style.display = 'none';
+        }
+
+        function adj(k, p, v, e) {
+            if(e && e.stopPropagation) e.stopPropagation();
+            state[k][p] = parseFloat((state[k][p] + v).toFixed(2));
+            applyStyles();
+        }
+
+        function toggleFormat(e) {
+            if(e && e.stopPropagation) e.stopPropagation();
+            is12H = !is12H; 
+            update();
+        }
+
+        function resetAll(e) {
+            if(e && e.stopPropagation) e.stopPropagation();
+            if(confirm("Reset Settings?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // --- 顯示處理 ---
         function getLunar(date) {
             var start2026 = new Date(2026, 1, 17);
             var diff = Math.floor((date.getTime() - start2026.getTime()) / 86400000);
@@ -115,26 +144,20 @@
 
         function update() {
             var now = new Date();
-            var m = now.getMonth() + 1;
-            var d = now.getDate();
-            var w = now.getDay();
             var days = ['週日','週一','週二','週三','週四','週五','週六'];
+            var w = now.getDay();
             
-            var dateStr = now.getFullYear() + "年" + m + "月" + d + "日 ";
-            var daySpan = (w===0||w===6) ? '<span class="holiday-red">'+days[w]+'</span>' : days[w];
-            document.getElementById('dateDisplay').innerHTML = dateStr + daySpan;
+            document.getElementById('dateDisplay').innerHTML = now.getFullYear() + "年" + (now.getMonth()+1) + "月" + now.getDate() + "日 " + ((w===0||w===6)?'<span class="holiday-red">'+days[w]+'</span>':days[w]);
             document.getElementById('lunarDisplay').innerText = "農曆 " + getLunar(now);
 
-            var hh = now.getHours();
-            var mm = now.getMinutes(); mm = (mm < 10 ? '0' : '') + mm;
-            var ss = now.getSeconds(); ss = (ss < 10 ? '0' : '') + ss;
-            
+            var hh = now.getHours(), mm = now.getMinutes(), ss = now.getSeconds();
             var ampm = "";
             if(is12H) {
                 ampm = (hh >= 12 ? "PM " : "AM ");
                 hh = hh % 12 || 12;
             }
-            hh = (hh < 10 ? '0' : '') + hh;
+            mm = (mm < 10 ? '0' : '') + mm;
+            ss = (ss < 10 ? '0' : '') + ss;
             document.getElementById('timeDisplay').innerText = ampm + hh + ":" + mm + ":" + ss;
         }
 
@@ -143,92 +166,49 @@
                 var k = keys[i];
                 var el = document.getElementById(k + 'Layer');
                 var txt = document.getElementById(k + 'Display');
-                // iPad 2 必須使用 -webkit- 前綴
-                var transformStr = "translate(" + state[k].x + "px, " + state[k].y + "px)";
-                el.style.webkitTransform = transformStr;
-                
-                var scaleStr = "scale(" + state[k].w + ", " + state[k].h + ")";
-                txt.style.webkitTransform = scaleStr;
+                el.style.webkitTransform = "translate(" + state[k].x + "px, " + state[k].y + "px)";
+                txt.style.webkitTransform = "scale(" + state[k].w + ", " + state[k].h + ")";
                 txt.style.color = state[k].c;
             }
-            localStorage.setItem('clock_ipad2_final', JSON.stringify(state));
+            localStorage.setItem('clock_ipad2_v6', JSON.stringify(state));
         }
 
-        function adj(k, p, v, e) {
-            if(e && e.stopPropagation) e.stopPropagation();
-            state[k][p] = parseFloat((state[k][p] + v).toFixed(2));
-            applyStyles();
-        }
-
-        function toggleFormat(e) { 
-            if(e && e.stopPropagation) e.stopPropagation();
-            is12H = !is12H; update(); 
-        }
-
-        function resetAll(e) {
-            if(e && e.stopPropagation) e.stopPropagation();
-            if(confirm("Reset All?")) { localStorage.clear(); location.reload(); }
-        }
-
-        function closeMenu(e) {
-            if(e && e.stopPropagation) e.stopPropagation();
-            document.getElementById('mainPopup').style.display = 'none';
-        }
-
-        // 全螢幕點擊
-        document.getElementById('mainBody').onclick = function() {
-            document.getElementById('mainPopup').style.display = 'block';
-        };
-        document.getElementById('mainPopup').onclick = function(e) {
-            if(e && e.stopPropagation) e.stopPropagation();
-        };
-
-        // 建立 UI (ES5 寫法)
         function buildUI() {
             var container = document.getElementById('controlsContainer');
             for(var i=0; i<keys.length; i++) {
                 var k = keys[i];
-                var div = document.createElement('div');
-                div.className = 'row-group';
-                div.innerHTML = '<span class="row-title">' + names[k] + '</span>' +
-                    '<div class="ctrl-row"><span class="label">XY Pos</span>' +
-                    '<button class="btn" onclick="adj(\''+k+'\',\'x\',-5, event)">←</button>' +
-                    '<button class="btn" onclick="adj(\''+k+'\',\'x\',5, event)">→</button>' +
-                    '<button class="btn" onclick="adj(\''+k+'\',\'y\',-5, event)">↑</button>' +
-                    '<button class="btn" onclick="adj(\''+k+'\',\'y\',5, event)">↓</button></div>' +
-                    '<div class="ctrl-row"><span class="label">WH Size</span>' +
-                    '<button class="btn" onclick="adj(\''+k+'\',\'w\',-0.05, event)">W-</button>' +
-                    '<button class="btn" onclick="adj(\''+k+'\',\'w\',0.05, event)">W+</button>' +
-                    '<button class="btn" onclick="adj(\''+k+'\',\'h\',-0.05, event)">H-</button>' +
-                    '<button class="btn" onclick="adj(\''+k+'\',\'h\',0.05, event)">H+</button></div>' +
-                    '<div class="color-bar" id="cp_'+k+'"></div>';
-                container.appendChild(div);
-
+                var html = '<div class="row-group"><span class="row-title">'+names[k]+'</span>' +
+                    '<div class="ctrl-row"><span class="label">XY</span>' +
+                    '<button class="btn" onclick="adj(\''+k+'\',\'x\',-5,event)">←</button><button class="btn" onclick="adj(\''+k+'\',\'x',5,event)">→</button>' +
+                    '<button class="btn" onclick="adj(\''+k+'\',\'y\',-5,event)">↑</button><button class="btn" onclick="adj(\''+k+'\',\'y',5,event)">↓</button></div>' +
+                    '<div class="ctrl-row"><span class="label">Size</span>' +
+                    '<button class="btn" onclick="adj(\''+k+'\',\'w\',-0.05,event)">W-</button><button class="btn" onclick="adj(\''+k+'\',\'w\',0.05,event)">W+</button>' +
+                    '<button class="btn" onclick="adj(\''+k+'\',\'h\',-0.05,event)">H-</button><button class="btn" onclick="adj(\''+k+'\',\'h\',0.05,event)">H+</button></div>' +
+                    '<div id="cp_'+k+'"></div></div>';
+                container.innerHTML += html;
+            }
+            
+            for(var i=0; i<keys.length; i++) {
+                var k = keys[i];
                 var bar = document.getElementById('cp_'+k);
                 for(var j=0; j<colors.length; j++) {
-                    (function(color, key){
+                    (function(c, key){
                         var s = document.createElement('div');
-                        s.className = 'swatch'; s.style.background = color;
-                        s.onclick = function(e) { 
-                            if(e && e.stopPropagation) e.stopPropagation();
-                            state[key].c = color; applyStyles(); 
-                        };
+                        s.className = 'swatch'; s.style.background = c;
+                        s.onclick = function(e){ if(e.stopPropagation) e.stopPropagation(); state[key].c = c; applyStyles(); };
                         bar.appendChild(s);
                     })(colors[j], k);
                 }
             }
         }
 
-        // iPad 2 不支援 fetch，改用傳統 XMLHttpRequest
         function getWeather() {
             var xhr = new XMLHttpRequest();
-            var url = 'https://api.openweathermap.org/data/2.5/weather?lat=25.0074&lon=121.2685&appid=5d13f280068f27e7b123c2b25149a95c&units=metric&lang=zh_tw';
-            xhr.open('GET', url, true);
+            xhr.open('GET', 'https://api.openweathermap.org/data/2.5/weather?lat=25.0074&lon=121.2685&appid=5d13f280068f27e7b123c2b25149a95c&units=metric&lang=zh_tw', true);
             xhr.onreadystatechange = function() {
                 if (xhr.readyState == 4 && xhr.status == 200) {
                     var data = JSON.parse(xhr.responseText);
-                    var temp = Math.round(data.main.temp);
-                    document.getElementById('weatherDisplay').innerHTML = "新興里 " + temp + "°C ☁️ " + data.clouds.all + "%";
+                    document.getElementById('weatherDisplay').innerText = "新興里 " + Math.round(data.main.temp) + "°C ☁️ " + data.clouds.all + "%";
                 }
             };
             xhr.send();
