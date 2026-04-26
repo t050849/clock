@@ -4,25 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>iPad 2 全螢幕觸控時鐘</title>
+    <title>iPad 2 Clock Legacy</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* 避免使用 Flexbox，改用絕對定位與傳統 Box Model */
+        * { margin: 0; padding: 0; }
         body, html {
             width: 100%; height: 100%;
             background-color: #000;
             font-family: Helvetica, Arial, sans-serif;
             overflow: hidden; color: #fff;
-            cursor: pointer; /* 提示全螢幕可點擊 */
         }
 
-        /* 顯示層級 */
         .layer { 
             position: absolute; 
             left: 40px; 
             white-space: nowrap; 
-            -webkit-transform-origin: left center; 
-            transform-origin: left center; 
-            pointer-events: none; /* 讓點擊穿透文字，確保點到 body */
+            -webkit-transform-origin: left center;
         }
         
         #dateLayer    { top: 60px; }
@@ -30,37 +27,41 @@
         #timeLayer    { top: 180px; }
         #weatherLayer { bottom: 60px; }
 
-        .date-txt    { font-size: 32px; font-weight: bold; display: inline-block; }
-        .lunar-txt   { font-size: 22px; font-weight: bold; display: inline-block; }
-        .time-txt    { font-size: 160px; font-weight: bold; display: inline-block; }
-        .weather-txt { font-size: 28px; font-weight: bold; display: inline-block; }
+        .date-txt    { font-size: 32px; font-weight: bold; }
+        .lunar-txt   { font-size: 22px; font-weight: bold; }
+        .time-txt    { font-size: 160px; font-weight: bold; }
+        .weather-txt { font-size: 28px; font-weight: bold; }
         
         .holiday-red { color: #FF0000 !important; }
 
-        /* 設定選單 */
+        /* 設定選單 - 使用傳統佈局 */
         .main-popup {
             position: absolute; 
-            top: 50%; left: 50%;
-            -webkit-transform: translate(-50%, -50%); transform: translate(-50%, -50%);
-            background: rgba(15, 15, 15, 0.98); 
-            border: 2px solid #FFFF00; border-radius: 15px; padding: 20px; 
-            display: none; z-index: 1000; width: 380px; 
-            max-height: 85%; overflow-y: scroll; -webkit-overflow-scrolling: touch;
-            cursor: default; /* 選單內恢復預設鼠標 */
-            box-shadow: 0 0 30px rgba(0,0,0,1);
+            top: 50px; left: 50px;
+            background: #111; 
+            border: 2px solid #FFFF00;
+            padding: 15px; 
+            display: none; z-index: 1000; width: 340px; 
+            box-shadow: 0 0 20px #000;
         }
         .show { display: block !important; }
 
-        /* 控制列樣式 */
-        .row-group { margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; }
-        .row-title { color: #FFFF00; font-size: 16px; font-weight: bold; margin-bottom: 8px; display: block; }
-        .ctrl-row { display: flex; align-items: center; margin-bottom: 5px; background: #222; padding: 4px; border-radius: 6px; }
-        .label { font-size: 12px; color: #ccc; width: 65px; padding-left: 5px; }
-        .btn { background: #444; color: #FFFF00; border: 1px solid #555; width: 50px; height: 35px; border-radius: 6px; font-weight: bold; margin: 0 3px; font-size: 14px; }
-        .btn:active { background: #777; }
+        .row-group { margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .row-title { color: #FFFF00; font-size: 14px; font-weight: bold; }
+        .ctrl-row { margin: 5px 0; background: #222; padding: 5px; }
+        .label { font-size: 11px; color: #ccc; display: inline-block; width: 60px; }
         
-        .color-bar { margin-top: 8px; display: flex; flex-wrap: wrap; }
-        .swatch { width: 30px; height: 30px; margin: 3px; border-radius: 4px; border: 1px solid #fff; }
+        .btn { 
+            background: #444; color: #FFFF00; border: 1px solid #555; 
+            width: 45px; height: 35px; font-weight: bold; margin-right: 2px;
+            vertical-align: middle;
+        }
+        
+        .color-bar { margin-top: 5px; }
+        .swatch { 
+            display: inline-block; width: 25px; height: 25px; 
+            margin: 2px; border: 1px solid #fff; 
+        }
     </style>
 </head>
 <body id="mainBody">
@@ -68,137 +69,177 @@
     <div id="dateLayer" class="layer"><div id="dateDisplay" class="date-txt"></div></div>
     <div id="lunarLayer" class="layer"><div id="lunarDisplay" class="lunar-txt"></div></div>
     <div id="timeLayer" class="layer"><div id="timeDisplay" class="time-txt">00:00:00</div></div>
-    <div id="weatherLayer" class="layer"><div id="weatherDisplay" class="weather-txt">天氣載入中...</div></div>
+    <div id="weatherLayer" class="layer"><div id="weatherDisplay" class="weather-txt">Weather Loading...</div></div>
 
     <div id="mainPopup" class="main-popup">
-        <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-            <button class="btn" style="width:48%" onclick="toggleFormat()">12 / 24H</button>
-            <button class="btn" style="width:48%; background:#400; color:#fff;" onclick="resetAll()">重設位置</button>
+        <div style="margin-bottom:10px;">
+            <button class="btn" style="width:100px" onclick="toggleFormat(event)">12/24H</button>
+            <button class="btn" style="width:100px; background:#400; color:#fff;" onclick="resetAll(event)">RESET</button>
         </div>
         <div id="controlsContainer"></div>
-        <button class="btn" style="width:100%; margin-top:15px; height:50px; background:#222;" onclick="closeMenu(event)">儲存並關閉</button>
+        <button class="btn" style="width:100%; margin-top:10px; height:40px;" onclick="closeMenu(event)">CLOSE</button>
     </div>
 
     <script>
-        const keys = ['date', 'lunar', 'time', 'weather'];
-        const names = { date:'西元日期', lunar:'農曆日期', time:'中央時間', weather:'底部天氣' };
-        let is12H = true;
-        
-        let state = JSON.parse(localStorage.getItem('clock_fulltouch_v1')) || {
-            date:    { x: 0, y: 0, w: 1.0, h: 1.0, c: '#FFFF00' },
-            lunar:   { x: 0, y: 0, w: 1.0, h: 1.0, c: '#FFFF00' },
-            time:    { x: 0, y: 0, w: 1.0, h: 1.0, c: '#FFFFFF' },
-            weather: { x: 0, y: 0, w: 1.0, h: 1.0, c: '#FFFF00' }
-        };
+        // 全部改回 ES5 語法 (var, function, 無 arrow function)
+        var keys = ['date', 'lunar', 'time', 'weather'];
+        var names = { date:'DATE', lunar:'LUNAR', time:'TIME', weather:'WEATHER' };
+        var is12H = true;
+        var state;
 
-        const colors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#00FFFF', '#007AFF', '#FFFFFF', '#FF69B4'];
+        // 傳統 JSON 讀取
+        try {
+            var saved = localStorage.getItem('clock_ipad2_final');
+            state = saved ? JSON.parse(saved) : {
+                date:    { x: 0, y: 0, w: 1.0, h: 1.0, c: '#FFFF00' },
+                lunar:   { x: 0, y: 0, w: 1.0, h: 1.0, c: '#FFFF00' },
+                time:    { x: 0, y: 0, w: 1.0, h: 1.0, c: '#FFFFFF' },
+                weather: { x: 0, y: 0, w: 1.0, h: 1.0, c: '#FFFF00' }
+            };
+        } catch(e) {
+            state = { /* 略過備份 */ };
+        }
+
+        var colors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#00FFFF', '#007AFF', '#FFFFFF', '#FF69B4'];
 
         function getLunar(date) {
-            const start2026 = new Date(2026, 1, 17);
-            const diff = Math.floor((date - start2026) / 86400000);
-            const mDays = [29, 30, 29, 30, 29, 30, 30, 29, 30, 29, 30, 29];
-            let d = diff, m = 1;
-            for(let i=0; i<12; i++){ if(d < mDays[i]){ m = i+1; break; } d -= mDays[i]; }
-            const mN = ["正","二","三","四","五","六","七","八","九","十","十一","腊"];
-            const dN = ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十","十一","十二","十三","十四","十五","十六","十七","十八","十九","二十","廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
-            return `丙午年 ${mN[m-1]}月${dN[d]}`;
+            var start2026 = new Date(2026, 1, 17);
+            var diff = Math.floor((date.getTime() - start2026.getTime()) / 86400000);
+            var mDays = [29, 30, 29, 30, 29, 30, 30, 29, 30, 29, 30, 29];
+            var d = diff, m = 1;
+            for(var i=0; i<12; i++){ if(d < mDays[i]){ m = i+1; break; } d -= mDays[i]; }
+            var mN = ["正","二","三","四","五","六","七","八","九","十","十一","腊"];
+            var dN = ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十","十一","十二","十三","十四","十五","十六","十七","十八","十九","二十","廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
+            return "丙午年 " + mN[m-1] + "月" + dN[d];
         }
 
         function update() {
-            const now = new Date();
-            const w = now.getDay(), days = ['週日','週一','週二','週三','週四','週五','週六'];
-            document.getElementById('dateDisplay').innerHTML = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${w===0||w===6?'<span class="holiday-red">'+days[w]+'</span>':days[w]}`;
-            document.getElementById('lunarDisplay').innerText = `農曆 ${getLunar(now)}`;
-            let hh = now.getHours(), mm = String(now.getMinutes()).padStart(2,'0'), ss = String(now.getSeconds()).padStart(2,'0');
-            let ampm = is12H ? (hh >= 12 ? "PM " : "AM ") : "";
-            if(is12H) hh = hh % 12 || 12;
-            document.getElementById('timeDisplay').innerText = ampm + String(hh).padStart(2,'0') + ":" + mm + ":" + ss;
+            var now = new Date();
+            var m = now.getMonth() + 1;
+            var d = now.getDate();
+            var w = now.getDay();
+            var days = ['週日','週一','週二','週三','週四','週五','週六'];
+            
+            var dateStr = now.getFullYear() + "年" + m + "月" + d + "日 ";
+            var daySpan = (w===0||w===6) ? '<span class="holiday-red">'+days[w]+'</span>' : days[w];
+            document.getElementById('dateDisplay').innerHTML = dateStr + daySpan;
+            document.getElementById('lunarDisplay').innerText = "農曆 " + getLunar(now);
+
+            var hh = now.getHours();
+            var mm = now.getMinutes(); mm = (mm < 10 ? '0' : '') + mm;
+            var ss = now.getSeconds(); ss = (ss < 10 ? '0' : '') + ss;
+            
+            var ampm = "";
+            if(is12H) {
+                ampm = (hh >= 12 ? "PM " : "AM ");
+                hh = hh % 12 || 12;
+            }
+            hh = (hh < 10 ? '0' : '') + hh;
+            document.getElementById('timeDisplay').innerText = ampm + hh + ":" + mm + ":" + ss;
         }
 
-        function apply() {
-            keys.forEach(k => {
-                const el = document.getElementById(k + 'Layer');
-                const txt = document.getElementById(k + 'Display');
-                el.style.webkitTransform = "translate(" + state[k].x + "px, " + state[k].y + "px)";
-                txt.style.webkitTransform = "scale(" + state[k].w + ", " + state[k].h + ")";
+        function applyStyles() {
+            for(var i=0; i<keys.length; i++) {
+                var k = keys[i];
+                var el = document.getElementById(k + 'Layer');
+                var txt = document.getElementById(k + 'Display');
+                // iPad 2 必須使用 -webkit- 前綴
+                var transformStr = "translate(" + state[k].x + "px, " + state[k].y + "px)";
+                el.style.webkitTransform = transformStr;
+                
+                var scaleStr = "scale(" + state[k].w + ", " + state[k].h + ")";
+                txt.style.webkitTransform = scaleStr;
                 txt.style.color = state[k].c;
-            });
-            localStorage.setItem('clock_fulltouch_v1', JSON.stringify(state));
+            }
+            localStorage.setItem('clock_ipad2_final', JSON.stringify(state));
         }
 
         function adj(k, p, v, e) {
-            if(e) e.stopPropagation(); // 防止點擊按鈕時觸發 body 的關閉邏輯
+            if(e && e.stopPropagation) e.stopPropagation();
             state[k][p] = parseFloat((state[k][p] + v).toFixed(2));
-            apply();
-        }
-
-        function resetAll(e) { 
-            if(e) e.stopPropagation();
-            if(confirm("確定重設所有位置與大小？")){ localStorage.removeItem('clock_fulltouch_v1'); location.reload(); } 
+            applyStyles();
         }
 
         function toggleFormat(e) { 
-            if(e) e.stopPropagation();
+            if(e && e.stopPropagation) e.stopPropagation();
             is12H = !is12H; update(); 
         }
 
-        function closeMenu(e) { 
-            if(e) e.stopPropagation();
-            document.getElementById('mainPopup').classList.remove('show'); 
+        function resetAll(e) {
+            if(e && e.stopPropagation) e.stopPropagation();
+            if(confirm("Reset All?")) { localStorage.clear(); location.reload(); }
         }
 
-        // 點擊 body 開啟選單
+        function closeMenu(e) {
+            if(e && e.stopPropagation) e.stopPropagation();
+            document.getElementById('mainPopup').style.display = 'none';
+        }
+
+        // 全螢幕點擊
         document.getElementById('mainBody').onclick = function() {
-            document.getElementById('mainPopup').classList.add('show');
+            document.getElementById('mainPopup').style.display = 'block';
         };
-
-        // 點擊選單內部阻止事件冒泡，避免點選單反而把選單關了
         document.getElementById('mainPopup').onclick = function(e) {
-            e.stopPropagation();
+            if(e && e.stopPropagation) e.stopPropagation();
         };
 
+        // 建立 UI (ES5 寫法)
         function buildUI() {
-            const container = document.getElementById('controlsContainer');
-            keys.forEach(k => {
-                let html = `
-                <div class="row-group">
-                    <span class="row-title">${names[k]}</span>
-                    <div class="ctrl-row"><span class="label">位置 X/Y</span>
-                        <button class="btn" onclick="adj('${k}','x',-5, event)">←</button><button class="btn" onclick="adj('${k}','x',5, event)">→</button>
-                        <button class="btn" onclick="adj('${k}','y',-5, event)">↑</button><button class="btn" onclick="adj('${k}','y',5, event)">↓</button>
-                    </div>
-                    <div class="ctrl-row"><span class="label">比例 W/H</span>
-                        <button class="btn" onclick="adj('${k}','w',-0.05, event)">寬-</button><button class="btn" onclick="adj('${k}','w',0.05, event)">寬+</button>
-                        <button class="btn" onclick="adj('${k}','h',-0.05, event)">高-</button><button class="btn" onclick="adj('${k}','h',0.05, event)">高+</button>
-                    </div>
-                    <div class="color-bar" id="cp_${k}"></div>
-                </div>`;
-                container.innerHTML += html;
-            });
-            
-            keys.forEach(k => {
-                const bar = document.getElementById('cp_'+k);
-                colors.forEach(c => {
-                    let s = document.createElement('div');
-                    s.className = 'swatch'; s.style.background = c;
-                    s.onclick = (e) => { e.stopPropagation(); state[k].c = c; apply(); };
-                    bar.appendChild(s);
-                });
-            });
+            var container = document.getElementById('controlsContainer');
+            for(var i=0; i<keys.length; i++) {
+                var k = keys[i];
+                var div = document.createElement('div');
+                div.className = 'row-group';
+                div.innerHTML = '<span class="row-title">' + names[k] + '</span>' +
+                    '<div class="ctrl-row"><span class="label">XY Pos</span>' +
+                    '<button class="btn" onclick="adj(\''+k+'\',\'x\',-5, event)">←</button>' +
+                    '<button class="btn" onclick="adj(\''+k+'\',\'x\',5, event)">→</button>' +
+                    '<button class="btn" onclick="adj(\''+k+'\',\'y\',-5, event)">↑</button>' +
+                    '<button class="btn" onclick="adj(\''+k+'\',\'y\',5, event)">↓</button></div>' +
+                    '<div class="ctrl-row"><span class="label">WH Size</span>' +
+                    '<button class="btn" onclick="adj(\''+k+'\',\'w\',-0.05, event)">W-</button>' +
+                    '<button class="btn" onclick="adj(\''+k+'\',\'w\',0.05, event)">W+</button>' +
+                    '<button class="btn" onclick="adj(\''+k+'\',\'h\',-0.05, event)">H-</button>' +
+                    '<button class="btn" onclick="adj(\''+k+'\',\'h\',0.05, event)">H+</button></div>' +
+                    '<div class="color-bar" id="cp_'+k+'"></div>';
+                container.appendChild(div);
+
+                var bar = document.getElementById('cp_'+k);
+                for(var j=0; j<colors.length; j++) {
+                    (function(color, key){
+                        var s = document.createElement('div');
+                        s.className = 'swatch'; s.style.background = color;
+                        s.onclick = function(e) { 
+                            if(e && e.stopPropagation) e.stopPropagation();
+                            state[key].c = color; applyStyles(); 
+                        };
+                        bar.appendChild(s);
+                    })(colors[j], k);
+                }
+            }
         }
 
+        // iPad 2 不支援 fetch，改用傳統 XMLHttpRequest
         function getWeather() {
-            fetch('https://api.openweathermap.org/data/2.5/weather?lat=25.0074&lon=121.2685&appid=5d13f280068f27e7b123c2b25149a95c&units=metric&lang=zh_tw')
-            .then(res => res.json()).then(data => {
-                const temp = Math.round(data.main.temp);
-                document.getElementById('weatherDisplay').innerHTML = `新興里 ${temp}°C ☁️ ${data.clouds.all}%`;
-            });
+            var xhr = new XMLHttpRequest();
+            var url = 'https://api.openweathermap.org/data/2.5/weather?lat=25.0074&lon=121.2685&appid=5d13f280068f27e7b123c2b25149a95c&units=metric&lang=zh_tw';
+            xhr.open('GET', url, true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var data = JSON.parse(xhr.responseText);
+                    var temp = Math.round(data.main.temp);
+                    document.getElementById('weatherDisplay').innerHTML = "新興里 " + temp + "°C ☁️ " + data.clouds.all + "%";
+                }
+            };
+            xhr.send();
         }
 
         buildUI();
+        update();
+        applyStyles();
+        getWeather();
         setInterval(update, 1000);
         setInterval(getWeather, 600000);
-        update(); apply(); getWeather();
     </script>
 </body>
 </html>
