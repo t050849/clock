@@ -4,246 +4,201 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>iPad 2 專業時鐘 - 2026 自動更新版</title>
+    <title>iPad 2 全螢幕觸控時鐘</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body, html {
             width: 100%; height: 100%;
-            background-color: #000000;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            overflow: hidden;
-            -webkit-user-select: none;
+            background-color: #000;
+            font-family: Helvetica, Arial, sans-serif;
+            overflow: hidden; color: #fff;
+            cursor: pointer; /* 提示全螢幕可點擊 */
         }
 
-        .top-section { position: absolute; top: 60px; left: 40px; z-index: 10; }
-        .bottom-section { position: absolute; bottom: 40px; left: 40px; right: 40px; z-index: 10; }
-        .middle-section { 
-            position: absolute; top: 50%; left: 0; width: 100%; text-align: center;
-            -webkit-transform: translateY(-50%); transform: translateY(-50%);
-        }
-
-        .date-display { 
-            font-size: 32px; color: #FFFF00; font-weight: bold; display: block;
-            -webkit-transform-origin: left top; transform-origin: left top;
-        }
-        .lunar-display { 
-            font-size: 22px; color: #FFFF00; font-weight: bold; display: block; margin-top: 5px;
-            -webkit-transform-origin: left top; transform-origin: left top;
-        }
-        .time-display { 
-            font-size: 160px; color: #FFFFFF; font-weight: bold; white-space: nowrap; 
-            display: inline-block; -webkit-transform-origin: center center; transform-origin: center center;
-            font-variant-numeric: tabular-nums; /* 防止數字跳動 */
-        }
-        .weather-display { 
-            font-size: 28px; color: #FFFF00; font-weight: bold; display: flex; align-items: center; 
-            -webkit-transform-origin: left bottom; transform-origin: left bottom;
+        /* 顯示層級 */
+        .layer { 
+            position: absolute; 
+            left: 40px; 
+            white-space: nowrap; 
+            -webkit-transform-origin: left center; 
+            transform-origin: left center; 
+            pointer-events: none; /* 讓點擊穿透文字，確保點到 body */
         }
         
-        .holiday-red { color: #FF4444 !important; }
-        .location-text { margin-right: 15px; }
-        .temp-text { margin-right: 20px; }
-        .weather-label { font-size: 0.8em; margin-right: 5px; opacity: 0.9; }
-        .weather-icon { display: inline-block; margin-right: 20px; font-size: 1.2em; }
-        .rain-label { font-size: 0.8em; margin-right: 5px; opacity: 0.9; }
-        .rain-chance { color: #00CED1; }
+        #dateLayer    { top: 60px; }
+        #lunarLayer   { top: 115px; }
+        #timeLayer    { top: 180px; }
+        #weatherLayer { bottom: 60px; }
 
-        /* 控制面板 */
-        .control-button {
-            position: absolute; bottom: 0; right: 0; width: 44px; height: 44px; 
-            background: rgba(255,255,0,0.05); border: none; outline: none;
-        }
+        .date-txt    { font-size: 32px; font-weight: bold; display: inline-block; }
+        .lunar-txt   { font-size: 22px; font-weight: bold; display: inline-block; }
+        .time-txt    { font-size: 160px; font-weight: bold; display: inline-block; }
+        .weather-txt { font-size: 28px; font-weight: bold; display: inline-block; }
+        
+        .holiday-red { color: #FF0000 !important; }
 
+        /* 設定選單 */
         .main-popup {
-            position: absolute; bottom: 50px; right: 10px; background: rgba(15, 15, 15, 0.95); 
-            border: 2px solid #FFFF00; padding: 15px; display: none; z-index: 1000; width: 340px;
-            border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            max-height: 80%; overflow-y: auto; -webkit-overflow-scrolling: touch;
+            position: absolute; 
+            top: 50%; left: 50%;
+            -webkit-transform: translate(-50%, -50%); transform: translate(-50%, -50%);
+            background: rgba(15, 15, 15, 0.98); 
+            border: 2px solid #FFFF00; border-radius: 15px; padding: 20px; 
+            display: none; z-index: 1000; width: 380px; 
+            max-height: 85%; overflow-y: scroll; -webkit-overflow-scrolling: touch;
+            cursor: default; /* 選單內恢復預設鼠標 */
+            box-shadow: 0 0 30px rgba(0,0,0,1);
         }
-        .show { display: block; }
-        .section-title { color: #FFFF00; font-size: 14px; margin: 15px 0 8px; text-align: center; border-top: 1px solid #444; padding-top: 10px; font-weight: bold; }
-        .pos-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; background: #222; padding: 8px; border-radius: 6px; }
-        .pos-label { color: #fff; font-size: 12px; width: 70px; }
-        .btn { background: #333; color: #FFFF00; border: 1px solid #FFFF00; padding: 8px; margin: 2px; border-radius: 4px; font-size: 14px; min-width: 40px; }
-        .btn:active { background: #FFFF00; color: #000; }
-        .color-row { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 5px; }
-        .swatch { width: 30px; height: 30px; margin: 4px; border: 1px solid #fff; border-radius: 50%; }
+        .show { display: block !important; }
+
+        /* 控制列樣式 */
+        .row-group { margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        .row-title { color: #FFFF00; font-size: 16px; font-weight: bold; margin-bottom: 8px; display: block; }
+        .ctrl-row { display: flex; align-items: center; margin-bottom: 5px; background: #222; padding: 4px; border-radius: 6px; }
+        .label { font-size: 12px; color: #ccc; width: 65px; padding-left: 5px; }
+        .btn { background: #444; color: #FFFF00; border: 1px solid #555; width: 50px; height: 35px; border-radius: 6px; font-weight: bold; margin: 0 3px; font-size: 14px; }
+        .btn:active { background: #777; }
+        
+        .color-bar { margin-top: 8px; display: flex; flex-wrap: wrap; }
+        .swatch { width: 30px; height: 30px; margin: 3px; border-radius: 4px; border: 1px solid #fff; }
     </style>
 </head>
-<body>
+<body id="mainBody">
 
-    <div class="top-section">
-        <div id="dateDisplay" class="date-display">...</div>
-        <div id="lunarDisplay" class="lunar-display">...</div>
-    </div>
-
-    <div class="middle-section">
-        <div id="timeDisplay" class="time-display">00:00:00</div>
-    </div>
-
-    <div class="bottom-section">
-        <div id="weatherDisplay" class="weather-display">
-            <span class="location-text">讀取中...</span>
-        </div>
-        <button id="controlBtn" class="control-button"></button>
-    </div>
+    <div id="dateLayer" class="layer"><div id="dateDisplay" class="date-txt"></div></div>
+    <div id="lunarLayer" class="layer"><div id="lunarDisplay" class="lunar-txt"></div></div>
+    <div id="timeLayer" class="layer"><div id="timeDisplay" class="time-txt">00:00:00</div></div>
+    <div id="weatherLayer" class="layer"><div id="weatherDisplay" class="weather-txt">天氣載入中...</div></div>
 
     <div id="mainPopup" class="main-popup">
-        <button class="btn" style="width:100%; font-weight:bold;" onclick="toggleFormat()">切換 12 / 24H 制</button>
-
-        <div class="section-title">文字位置微調</div>
-        <div class="pos-row"><span class="pos-label">西元日期</span><div><button class="btn" onclick="adjPos('date', 'x', -5)">←</button><button class="btn" onclick="adjPos('date', 'x', 5)">→</button><button class="btn" onclick="adjPos('date', 'y', -5)">↑</button><button class="btn" onclick="adjPos('date', 'y', 5)">↓</button></div></div>
-        <div class="pos-row"><span class="pos-label">農曆日期</span><div><button class="btn" onclick="adjPos('lunar', 'x', -5)">←</button><button class="btn" onclick="adjPos('lunar', 'x', 5)">→</button><button class="btn" onclick="adjPos('lunar', 'y', -5)">↑</button><button class="btn" onclick="adjPos('lunar', 'y', 5)">↓</button></div></div>
-        <div class="pos-row"><span class="pos-label">中央時間</span><div><button class="btn" onclick="adjPos('time', 'x', -10)">←</button><button class="btn" onclick="adjPos('time', 'x', 10)">→</button><button class="btn" onclick="adjPos('time', 'y', -10)">↑</button><button class="btn" onclick="adjPos('time', 'y', 10)">↓</button></div></div>
-        <div class="pos-row"><span class="pos-label">底部天氣</span><div><button class="btn" onclick="adjPos('weather', 'x', -5)">←</button><button class="btn" onclick="adjPos('weather', 'x', 5)">→</button><button class="btn" onclick="adjPos('weather', 'y', -5)">↑</button><button class="btn" onclick="adjPos('weather', 'y', 5)">↓</button></div></div>
-
-        <div class="section-title">尺寸縮放</div>
-        <div class="pos-row"><span class="pos-label">西元/農曆</span><button class="btn" style="flex:1" onclick="adjScale('date', -0.05);adjScale('lunar', -0.05)">變小 -</button><button class="btn" style="flex:1" onclick="adjScale('date', 0.05);adjScale('lunar', 0.05)">變大 +</button></div>
-        <div class="pos-row"><span class="pos-label">時間寬高</span><button class="btn" onclick="adjTimeScale('x', -0.05)">寬-</button><button class="btn" onclick="adjTimeScale('x', 0.05)">寬+</button><button class="btn" onclick="adjTimeScale('y', -0.05)">高-</button><button class="btn" onclick="adjTimeScale('y', 0.05)">高+</button></div>
-        <div class="pos-row"><span class="pos-label">天氣大小</span><button class="btn" style="flex:1" onclick="adjScale('weather', -0.1)">變小 -</button><button class="btn" style="flex:1" onclick="adjScale('weather', 0.1)">變大 +</button></div>
-
-        <div class="section-title">色彩方案 (1:日期 2:時間 3:天氣)</div>
-        <div id="palette1" class="color-row"></div>
-        <div id="palette2" class="color-row"></div>
-        <div id="palette3" class="color-row"></div>
-
-        <button class="btn" style="width:100%; margin-top:20px; background:#500; color:#fff; border:none;" onclick="closeMenu()">儲存並關閉選單</button>
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+            <button class="btn" style="width:48%" onclick="toggleFormat()">12 / 24H</button>
+            <button class="btn" style="width:48%; background:#400; color:#fff;" onclick="resetAll()">重設位置</button>
+        </div>
+        <div id="controlsContainer"></div>
+        <button class="btn" style="width:100%; margin-top:15px; height:50px; background:#222;" onclick="closeMenu(event)">儲存並關閉</button>
     </div>
 
     <script>
-        /* --- 農曆算法插件 (簡化版) --- */
-        var Lunar = {
-            getLunarDate: function(date) {
-                // 這裡使用了內建的 Intl 進行農曆轉換，這在舊版 iOS 需視 WebKit 版本，
-                // 若 iPad 2 不支援，則會顯示西元年份替代。
-                try {
-                    var options = { calendar: 'chinese', day: 'numeric', month: 'long' };
-                    return new Intl.DateTimeFormat('zh-TW-u-ca-chinese', options).format(date);
-                } catch(e) {
-                    return "農曆更新中";
-                }
-            }
+        const keys = ['date', 'lunar', 'time', 'weather'];
+        const names = { date:'西元日期', lunar:'農曆日期', time:'中央時間', weather:'底部天氣' };
+        let is12H = true;
+        
+        let state = JSON.parse(localStorage.getItem('clock_fulltouch_v1')) || {
+            date:    { x: 0, y: 0, w: 1.0, h: 1.0, c: '#FFFF00' },
+            lunar:   { x: 0, y: 0, w: 1.0, h: 1.0, c: '#FFFF00' },
+            time:    { x: 0, y: 0, w: 1.0, h: 1.0, c: '#FFFFFF' },
+            weather: { x: 0, y: 0, w: 1.0, h: 1.0, c: '#FFFF00' }
         };
 
-        var is12H = true;
-        var state = {
-            date: { scale: 1.0, x: 0, y: 0 },
-            lunar: { scale: 1.0, x: 0, y: 0 },
-            time: { sx: 1.0, sy: 1.0, x: 0, y: 0 },
-            weather: { scale: 1.0, x: 0, y: 0 }
-        };
+        const colors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#00FFFF', '#007AFF', '#FFFFFF', '#FF69B4'];
 
-        var colors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#00FFFF', '#FFFFFF', '#FF69B4', '#AAAAAA'];
-        var dDiv = document.getElementById('dateDisplay'),
-            lDiv = document.getElementById('lunarDisplay'),
-            tDiv = document.getElementById('timeDisplay'),
-            wDiv = document.getElementById('weatherDisplay'),
-            menu = document.getElementById('mainPopup');
-
-        var holidays = { "1-1": "元旦", "2-28": "和平紀念日", "4-4": "兒童節", "4-5": "清明節", "5-1": "勞動節", "10-10": "國慶日" };
+        function getLunar(date) {
+            const start2026 = new Date(2026, 1, 17);
+            const diff = Math.floor((date - start2026) / 86400000);
+            const mDays = [29, 30, 29, 30, 29, 30, 30, 29, 30, 29, 30, 29];
+            let d = diff, m = 1;
+            for(let i=0; i<12; i++){ if(d < mDays[i]){ m = i+1; break; } d -= mDays[i]; }
+            const mN = ["正","二","三","四","五","六","七","八","九","十","十一","腊"];
+            const dN = ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十","十一","十二","十三","十四","十五","十六","十七","十八","十九","二十","廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
+            return `丙午年 ${mN[m-1]}月${dN[d]}`;
+        }
 
         function update() {
-            var now = new Date();
-            var m = now.getMonth() + 1, d = now.getDate(), dayOfWeek = now.getDay();
-            var dayKey = m + "-" + d;
-            var isHoliday = !!holidays[dayKey], isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-            
-            var days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
-            var weekDaySpan = (isHoliday || isWeekend) ? '<span class="holiday-red">' + days[dayOfWeek] + '</span>' : days[dayOfWeek];
-            dDiv.innerHTML = now.getFullYear() + '年' + m + '月' + d + '日 ' + weekDaySpan;
-            
-            // 自動更新農曆與民國年
-            var rocYear = now.getFullYear() - 1911;
-            var lunarText = Lunar.getLunarDate(now);
-            var holidayLabel = isHoliday ? ' <span class="holiday-red">(' + holidays[dayKey] + ')</span>' : "";
-            lDiv.innerHTML = "民國 " + rocYear + "年 " + lunarText + holidayLabel;
-
-            var hh = now.getHours(), mm = now.getMinutes(), ss = now.getSeconds();
-            var ampm = is12H ? (hh >= 12 ? "PM " : "AM ") : "";
-            if (is12H) { hh = hh % 12; if (hh === 0) hh = 12; }
-            if (hh < 10) hh = "0" + hh;
-            if (mm < 10) mm = "0" + mm;
-            if (ss < 10) ss = "0" + ss;
-            tDiv.innerHTML = ampm + hh + ":" + mm + ":" + ss;
+            const now = new Date();
+            const w = now.getDay(), days = ['週日','週一','週二','週三','週四','週五','週六'];
+            document.getElementById('dateDisplay').innerHTML = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${w===0||w===6?'<span class="holiday-red">'+days[w]+'</span>':days[w]}`;
+            document.getElementById('lunarDisplay').innerText = `農曆 ${getLunar(now)}`;
+            let hh = now.getHours(), mm = String(now.getMinutes()).padStart(2,'0'), ss = String(now.getSeconds()).padStart(2,'0');
+            let ampm = is12H ? (hh >= 12 ? "PM " : "AM ") : "";
+            if(is12H) hh = hh % 12 || 12;
+            document.getElementById('timeDisplay').innerText = ampm + String(hh).padStart(2,'0') + ":" + mm + ":" + ss;
         }
 
-        function applyAllTransforms() {
-            var elements = [
-                {el: dDiv, s: state.date},
-                {el: lDiv, s: state.lunar},
-                {el: wDiv, s: state.weather}
-            ];
-            elements.forEach(function(item){
-                var tr = "translate("+item.s.x+"px, "+item.s.y+"px) scale("+item.s.scale+")";
-                item.el.style.webkitTransform = tr;
-                item.el.style.transform = tr;
+        function apply() {
+            keys.forEach(k => {
+                const el = document.getElementById(k + 'Layer');
+                const txt = document.getElementById(k + 'Display');
+                el.style.webkitTransform = "translate(" + state[k].x + "px, " + state[k].y + "px)";
+                txt.style.webkitTransform = "scale(" + state[k].w + ", " + state[k].h + ")";
+                txt.style.color = state[k].c;
             });
-            var tTr = "translate("+state.time.x+"px, "+state.time.y+"px) scale("+state.time.sx+", "+state.time.sy+")";
-            tDiv.style.webkitTransform = tTr;
-            tDiv.style.transform = tTr;
+            localStorage.setItem('clock_fulltouch_v1', JSON.stringify(state));
         }
 
-        function adjPos(target, axis, val) { state[target][axis] += val; applyAllTransforms(); }
-        function adjScale(type, val) { state[type].scale += val; applyAllTransforms(); }
-        function adjTimeScale(axis, val) { if(axis === 'x') state.time.sx += val; else state.time.sy += val; applyAllTransforms(); }
-        function toggleFormat() { is12H = !is12H; update(); }
-        
-        function getWeather() {
-            var url = 'https://api.openweathermap.org/data/2.5/weather?lat=25.0074&lon=121.2685&appid=5d13f280068f27e7b123c2b25149a95c&units=metric&lang=zh_tw';
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', url, true);
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var data = JSON.parse(xhr.responseText);
-                    var temp = Math.round(data.main.temp);
-                    var desc = data.weather[0].description;
-                    var icon = desc.indexOf('晴') !== -1 ? '☀️' : (desc.indexOf('雨') !== -1 ? '☔' : '☁️');
-                    var rain = data.clouds ? data.clouds.all : 0;
-                    
-                    wDiv.innerHTML = 
-                        '<span class="location-text">新興里</span>' +
-                        '<span class="temp-text">' + temp + '°C</span>' +
-                        '<span class="weather-label">天氣:</span>' +
-                        '<span class="weather-icon">' + icon + '</span>' +
-                        '<span class="rain-label">雲量/降雨:</span>' +
-                        '<span class="rain-chance">' + rain + '%</span>';
-                }
-            };
-            xhr.send();
+        function adj(k, p, v, e) {
+            if(e) e.stopPropagation(); // 防止點擊按鈕時觸發 body 的關閉邏輯
+            state[k][p] = parseFloat((state[k][p] + v).toFixed(2));
+            apply();
         }
 
-        function initPalettes() {
-            for(var i=1; i<=3; i++) {
-                var container = document.getElementById('palette' + i);
-                for(var j=0; j<colors.length; j++) {
-                    (function(targetIdx, colorHex){
-                        var s = document.createElement('div');
-                        s.className = 'swatch'; 
-                        s.style.backgroundColor = colorHex;
-                        s.onclick = function() {
-                            if(targetIdx === 1) { dDiv.style.color = colorHex; lDiv.style.color = colorHex; }
-                            if(targetIdx === 2) tDiv.style.color = colorHex;
-                            if(targetIdx === 3) wDiv.style.color = colorHex;
-                        };
-                        container.appendChild(s);
-                    })(i, colors[j]);
-                }
-            }
+        function resetAll(e) { 
+            if(e) e.stopPropagation();
+            if(confirm("確定重設所有位置與大小？")){ localStorage.removeItem('clock_fulltouch_v1'); location.reload(); } 
         }
 
-        document.getElementById('controlBtn').onclick = function(e) {
-            e.stopPropagation();
-            menu.style.display = (menu.style.display === "block") ? "none" : "block";
+        function toggleFormat(e) { 
+            if(e) e.stopPropagation();
+            is12H = !is12H; update(); 
+        }
+
+        function closeMenu(e) { 
+            if(e) e.stopPropagation();
+            document.getElementById('mainPopup').classList.remove('show'); 
+        }
+
+        // 點擊 body 開啟選單
+        document.getElementById('mainBody').onclick = function() {
+            document.getElementById('mainPopup').classList.add('show');
         };
 
-        function closeMenu() { menu.style.display = "none"; }
+        // 點擊選單內部阻止事件冒泡，避免點選單反而把選單關了
+        document.getElementById('mainPopup').onclick = function(e) {
+            e.stopPropagation();
+        };
 
-        // 初始化
-        initPalettes();
+        function buildUI() {
+            const container = document.getElementById('controlsContainer');
+            keys.forEach(k => {
+                let html = `
+                <div class="row-group">
+                    <span class="row-title">${names[k]}</span>
+                    <div class="ctrl-row"><span class="label">位置 X/Y</span>
+                        <button class="btn" onclick="adj('${k}','x',-5, event)">←</button><button class="btn" onclick="adj('${k}','x',5, event)">→</button>
+                        <button class="btn" onclick="adj('${k}','y',-5, event)">↑</button><button class="btn" onclick="adj('${k}','y',5, event)">↓</button>
+                    </div>
+                    <div class="ctrl-row"><span class="label">比例 W/H</span>
+                        <button class="btn" onclick="adj('${k}','w',-0.05, event)">寬-</button><button class="btn" onclick="adj('${k}','w',0.05, event)">寬+</button>
+                        <button class="btn" onclick="adj('${k}','h',-0.05, event)">高-</button><button class="btn" onclick="adj('${k}','h',0.05, event)">高+</button>
+                    </div>
+                    <div class="color-bar" id="cp_${k}"></div>
+                </div>`;
+                container.innerHTML += html;
+            });
+            
+            keys.forEach(k => {
+                const bar = document.getElementById('cp_'+k);
+                colors.forEach(c => {
+                    let s = document.createElement('div');
+                    s.className = 'swatch'; s.style.background = c;
+                    s.onclick = (e) => { e.stopPropagation(); state[k].c = c; apply(); };
+                    bar.appendChild(s);
+                });
+            });
+        }
+
+        function getWeather() {
+            fetch('https://api.openweathermap.org/data/2.5/weather?lat=25.0074&lon=121.2685&appid=5d13f280068f27e7b123c2b25149a95c&units=metric&lang=zh_tw')
+            .then(res => res.json()).then(data => {
+                const temp = Math.round(data.main.temp);
+                document.getElementById('weatherDisplay').innerHTML = `新興里 ${temp}°C ☁️ ${data.clouds.all}%`;
+            });
+        }
+
+        buildUI();
         setInterval(update, 1000);
-        update();
-        getWeather();
-        setInterval(getWeather, 600000); // 10分鐘更新一次天氣
+        setInterval(getWeather, 600000);
+        update(); apply(); getWeather();
     </script>
 </body>
 </html>
