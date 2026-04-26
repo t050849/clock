@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>iPad 2 時鐘 - 假日紅字版</title>
+    <title>iPad 2 時鐘 - 功能全開版</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body, html {
@@ -38,9 +38,7 @@
             -webkit-transform-origin: left bottom; transform-origin: left bottom;
         }
         
-        /* 假日紅字樣式 */
         .holiday-red { color: #FF0000 !important; }
-        
         .location-text { margin-right: 12px; }
         .temp-text { margin-right: 15px; }
         .weather-label { font-size: 0.9em; margin-right: 5px; }
@@ -87,14 +85,22 @@
 
     <div id="mainPopup" class="main-popup">
         <button class="btn" style="width:100%" onclick="toggleFormat()">切換 12/24H 制</button>
+
         <div class="section-title">文字位置 (方向鍵)</div>
         <div class="pos-row"><span class="pos-label">西元日期</span><button class="btn btn-sm" onclick="adjPos('date', 'x', -5)">←</button><button class="btn btn-sm" onclick="adjPos('date', 'x', 5)">→</button><button class="btn btn-sm" onclick="adjPos('date', 'y', -5)">↑</button><button class="btn btn-sm" onclick="adjPos('date', 'y', 5)">↓</button></div>
-        <div class="pos-row"><span class="pos-label">農曆區</span><button class="btn btn-sm" onclick="adjPos('lunar', 'x', -5)">←</button><button class="btn btn-sm" onclick="adjPos('lunar', 'x', 5)">→</button><button class="btn btn-sm" onclick="adjPos('lunar', 'y', -5)">↑</button><button class="btn btn-sm" onclick="adjPos('lunar', 'y', 5)">↓</button></div>
+        <div class="pos-row"><span class="pos-label">農曆日期</span><button class="btn btn-sm" onclick="adjPos('lunar', 'x', -5)">←</button><button class="btn btn-sm" onclick="adjPos('lunar', 'x', 5)">→</button><button class="btn btn-sm" onclick="adjPos('lunar', 'y', -5)">↑</button><button class="btn btn-sm" onclick="adjPos('lunar', 'y', 5)">↓</button></div>
         <div class="pos-row"><span class="pos-label">中央時間</span><button class="btn btn-sm" onclick="adjPos('time', 'x', -5)">←</button><button class="btn btn-sm" onclick="adjPos('time', 'x', 5)">→</button><button class="btn btn-sm" onclick="adjPos('time', 'y', -5)">↑</button><button class="btn btn-sm" onclick="adjPos('time', 'y', 5)">↓</button></div>
         <div class="pos-row"><span class="pos-label">底部天氣</span><button class="btn btn-sm" onclick="adjPos('weather', 'x', -5)">←</button><button class="btn btn-sm" onclick="adjPos('weather', 'x', 5)">→</button><button class="btn btn-sm" onclick="adjPos('weather', 'y', -5)">↑</button><button class="btn btn-sm" onclick="adjPos('weather', 'y', 5)">↓</button></div>
-        
+
+        <div class="section-title">字體縮放 (大小)</div>
+        <div class="pos-row"><span class="pos-label">西元日期</span><button class="btn" style="flex:1" onclick="adjScale('date', -0.05)">小 -</button><button class="btn" style="flex:1" onclick="adjScale('date', 0.05)">大 +</button></div>
+        <div class="pos-row"><span class="pos-label">農曆日期</span><button class="btn" style="flex:1" onclick="adjScale('lunar', -0.05)">小 -</button><button class="btn" style="flex:1" onclick="adjScale('lunar', 0.05)">大 +</button></div>
+        <div class="pos-row"><span class="pos-label">時間比例</span><button class="btn btn-sm" onclick="adjTimeScale('x', -0.05)">寬-</button><button class="btn btn-sm" onclick="adjTimeScale('x', 0.05)">寬+</button><button class="btn btn-sm" onclick="adjTimeScale('y', -0.1)">高-</button><button class="btn btn-sm" onclick="adjTimeScale('y', 0.1)">高+</button></div>
+        <div class="pos-row"><span class="pos-label">底部天氣</span><button class="btn" style="flex:1" onclick="adjScale('weather', -0.1)">小 -</button><button class="btn" style="flex:1" onclick="adjScale('weather', 0.1)">大 +</button></div>
+
         <div class="section-title">字體顏色</div>
         <div id="palette1"></div><div id="palette2"></div><div id="palette3"></div>
+
         <button class="btn" style="width:100%; margin-top:20px; background:#400; color:#fff; border:none;" onclick="closeMenu()">儲存並關閉</button>
     </div>
 
@@ -108,11 +114,7 @@
         };
 
         var colors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#FFFFFF', '#FF69B4', '#00CED1'];
-        // 國定假日清單 (月-日)
-        var holidays = {
-            "1-1": "元旦", "1-25": "春節", "1-26": "春節", "1-27": "春節", "1-28": "春節",
-            "2-28": "和平紀念日", "4-4": "兒童節", "4-5": "清明節", "5-1": "勞動節", "10-10": "國慶日"
-        };
+        var holidays = { "1-1": "元旦", "2-28": "和平紀念日", "4-4": "兒童節", "4-5": "清明節", "5-1": "勞動節", "10-10": "國慶日" };
 
         var dDiv = document.getElementById('dateDisplay'),
             lDiv = document.getElementById('lunarDisplay'),
@@ -120,38 +122,21 @@
             wDiv = document.getElementById('weatherDisplay'),
             menu = document.getElementById('mainPopup');
 
-        function getLunarText(date) {
-            // 2026/4/26 是農曆三月初九 (簡易對照)
-            var m = date.getMonth() + 1;
-            var d = date.getDate();
-            if (m == 4 && d == 26) return "三月初九";
-            if (m == 4 && d == 27) return "三月初十";
-            return "三月初九"; 
-        }
-
         function update() {
             var now = new Date();
             var m = now.getMonth() + 1, d = now.getDate(), dayOfWeek = now.getDay();
             var dayKey = m + "-" + d;
-            
-            // 判斷是否為假日 (週末或清單中的國定假日)
             var holidayName = holidays[dayKey];
             var isHoliday = !!holidayName;
             var isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
             
             var days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
-            
-            // 如果是假日或週末，加上 holiday-red 樣式
-            var weekDaySpan = (isHoliday || isWeekend) ? 
-                '<span class="holiday-red">' + days[dayOfWeek] + '</span>' : days[dayOfWeek];
-            
+            var weekDaySpan = (isHoliday || isWeekend) ? '<span class="holiday-red">' + days[dayOfWeek] + '</span>' : days[dayOfWeek];
             dDiv.innerHTML = now.getFullYear() + '年' + m + '月' + d + '日 ' + weekDaySpan;
             
             var rocYear = now.getFullYear() - 1911;
-            var lunarDateText = getLunarText(now);
             var holidayLabel = isHoliday ? ' <span class="holiday-red">(' + holidayName + ')</span>' : "";
-            
-            lDiv.innerHTML = "農曆 民國 " + rocYear + "年 " + lunarDateText + holidayLabel;
+            lDiv.innerHTML = "農曆 民國 " + rocYear + "年 三月初九" + holidayLabel;
 
             var hh = now.getHours(), mm = now.getMinutes(), ss = now.getSeconds();
             var ampm = is12H ? (hh >= 12 ? "PM " : "AM ") : "";
@@ -164,12 +149,18 @@
 
         function applyAllTransforms() {
             dDiv.style.webkitTransform = "translate("+state.date.x+"px, "+state.date.y+"px) scale("+state.date.scale+")";
+            dDiv.style.transform = dDiv.style.webkitTransform;
             lDiv.style.webkitTransform = "translate("+state.lunar.x+"px, "+state.lunar.y+"px) scale("+state.lunar.scale+")";
+            lDiv.style.transform = lDiv.style.webkitTransform;
             tDiv.style.webkitTransform = "translate("+state.time.x+"px, "+state.time.y+"px) scale("+state.time.sx+", "+state.time.sy+")";
+            tDiv.style.transform = tDiv.style.webkitTransform;
             wDiv.style.webkitTransform = "translate("+state.weather.x+"px, "+state.weather.y+"px) scale("+state.weather.scale+")";
+            wDiv.style.transform = wDiv.style.webkitTransform;
         }
 
         function adjPos(target, axis, val) { state[target][axis] += val; applyAllTransforms(); }
+        function adjScale(type, val) { state[type].scale += val; applyAllTransforms(); }
+        function adjTimeScale(axis, val) { if(axis === 'x') state.time.sx += val; else state.time.sy += val; applyAllTransforms(); }
         function toggleFormat() { is12H = !is12H; update(); }
         
         function getWeather() {
@@ -202,7 +193,7 @@
                     s.className = 'swatch'; s.style.backgroundColor = colors[j];
                     (function(t, c){
                         s.onclick = function() {
-                            if(t === 1) { dDiv.style.color = c; } // 僅影響西元日期，農曆維持黃色或依設定
+                            if(t === 1) { dDiv.style.color = c; }
                             if(t === 2) tDiv.style.color = c;
                             if(t === 3) wDiv.style.color = c;
                         };
