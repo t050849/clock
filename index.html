@@ -122,17 +122,27 @@
             wDiv = document.getElementById('weatherDisplay'),
             menu = document.getElementById('mainPopup');
 
-        // --- 農曆轉換邏輯 ---
-        function getLunarDate(date) {
-            // 使用 Intl API 取得農曆資訊 (iPad 2 若版本太舊可能不支援，改用民國年與基礎農曆標記)
+        // 計算天干地支與農曆日期
+        function getLunarInfo(date) {
             try {
-                var options = { calendar: 'chinese', year: 'numeric', month: 'long', day: 'numeric' };
+                // 取得天干地支 (例如: 丙午)
+                var heavenlyStems = ["庚", "辛", "壬", "癸", "甲", "乙", "丙", "丁", "戊", "己"];
+                var earthlyBranches = ["申", "酉", "戌", "亥", "子", "丑", "寅", "卯", "辰", "巳", "午", "未"];
+                var sexagenary = heavenlyStems[date.getFullYear() % 10] + earthlyBranches[date.getFullYear() % 12];
+
+                // 取得農曆月日 (例如: 三月十四)
+                var options = { calendar: 'chinese', month: 'long', day: 'numeric' };
                 var formatter = new Intl.DateTimeFormat('zh-TW-u-ca-chinese', options);
-                var parts = formatter.format(date);
-                // 移除年份後的文字，僅回傳月日
-                return parts.split('年')[1] || parts;
+                var lunarParts = formatter.format(date);
+                // 只要月日的部分，過濾掉年份
+                var lunarMonthDay = lunarParts.replace(/.*年/, "");
+
+                return {
+                    sexagenary: sexagenary,
+                    monthDay: lunarMonthDay
+                };
             } catch(e) {
-                return "日期讀取中";
+                return { sexagenary: "??", monthDay: "讀取失敗" };
             }
         }
 
@@ -148,12 +158,13 @@
             var weekDaySpan = (isHoliday || isWeekend) ? '<span class="holiday-red">' + days[dayOfWeek] + '</span>' : days[dayOfWeek];
             dDiv.innerHTML = now.getFullYear() + '年' + m + '月' + d + '日 ' + weekDaySpan;
             
-            var rocYear = now.getFullYear() - 1911;
-            var lunarString = getLunarDate(now);
+            // --- 更新農曆顯示為要求格式：農曆 115年(丙午)三月14日 ---
+            var rocYear = now.getFullYear() - 1911; 
+            var lunarInfo = getLunarInfo(now);
             var holidayLabel = isHoliday ? ' <span class="holiday-red">(' + holidayName + ')</span>' : "";
             
-            // 正確顯示農曆與民國年
-            lDiv.innerHTML = "農曆 " + lunarString + " (民國 " + rocYear + "年)" + holidayLabel;
+            lDiv.innerHTML = "農曆 " + rocYear + "年(" + lunarInfo.sexagenary + ")" + lunarInfo.monthDay + holidayLabel;
+            // -----------------------------------------------------
 
             var hh = now.getHours(), mm = now.getMinutes(), ss = now.getSeconds();
             var ampm = is12H ? (hh >= 12 ? "PM " : "AM ") : "";
