@@ -122,6 +122,20 @@
             wDiv = document.getElementById('weatherDisplay'),
             menu = document.getElementById('mainPopup');
 
+        // --- 農曆轉換邏輯 ---
+        function getLunarDate(date) {
+            // 使用 Intl API 取得農曆資訊 (iPad 2 若版本太舊可能不支援，改用民國年與基礎農曆標記)
+            try {
+                var options = { calendar: 'chinese', year: 'numeric', month: 'long', day: 'numeric' };
+                var formatter = new Intl.DateTimeFormat('zh-TW-u-ca-chinese', options);
+                var parts = formatter.format(date);
+                // 移除年份後的文字，僅回傳月日
+                return parts.split('年')[1] || parts;
+            } catch(e) {
+                return "日期讀取中";
+            }
+        }
+
         function update() {
             var now = new Date();
             var m = now.getMonth() + 1, d = now.getDate(), dayOfWeek = now.getDay();
@@ -135,8 +149,11 @@
             dDiv.innerHTML = now.getFullYear() + '年' + m + '月' + d + '日 ' + weekDaySpan;
             
             var rocYear = now.getFullYear() - 1911;
+            var lunarString = getLunarDate(now);
             var holidayLabel = isHoliday ? ' <span class="holiday-red">(' + holidayName + ')</span>' : "";
-            lDiv.innerHTML = "農曆 民國 " + rocYear + "年 三月初九" + holidayLabel;
+            
+            // 正確顯示農曆與民國年
+            lDiv.innerHTML = "農曆 " + lunarString + " (民國 " + rocYear + "年)" + holidayLabel;
 
             var hh = now.getHours(), mm = now.getMinutes(), ss = now.getSeconds();
             var ampm = is12H ? (hh >= 12 ? "PM " : "AM ") : "";
